@@ -3,13 +3,14 @@
 var nano = require('nano');
 var sax = require('sax');
 
-// get each row id, stream the last attachment through a sax parser
+// get each row id, stream the latest attachment through a sax parser
 function handleRow(tdrmets, id) {
     tdrmets.get( id, function (err, body) {
+        if (err) return console.error(err);
+        if (!body._attachments) return;
 
-        // get the last attachment name
-        // the last attachment name *should* be the latest
-        for (var atchname in body._attachments);
+        // get the latest attachment name
+        var atchname = Object.keys(body._attachments).sort().pop();
 
         var saxstrm = sax.createStream();
         saxstrm.on('opentag', function (node) {
@@ -57,8 +58,7 @@ cli.main(function(args, options) {
     var tdrmets = new nano(options.couch);
 
     // loop over all documents
-    tdrmets.list( {limit: 10000},
-            function (err, body) {
+    tdrmets.list( function (err, body) {
         if (err) return console.error(err);
         for (var row of body.rows) {
             handleRow(tdrmets, row.id);
