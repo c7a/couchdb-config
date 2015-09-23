@@ -84,9 +84,9 @@ function insertFile(tdrmets, filename, days) {
 var cli = require('cli');
 cli.parse({
     couch: ['c', 'couch database URL', 'string', 'http://localhost:5984/tdrmets'],
+    limit: ['l', 'limit simultaneous couch connections', 'int', 7],
     root:  ['r', 'search path root', 'path'],
     days:  ['m', 'modified in last N days', 'int'],
-    limit: ['l', 'limit simultaneous couch connections', 'int', 7],
 });
 cli.main(function(args, options) {
 

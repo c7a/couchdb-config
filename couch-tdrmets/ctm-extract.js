@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 var nano = require('nano');
-var sax = require('sax');
+var expat = require('node-expat');
 
 // get each row id, stream the latest attachment through a sax parser
 function handleRow(tdrmets, id) {
+
     tdrmets.get( id, function (err, body) {
         if (err) return console.error(err);
         if (!body._attachments) return;
@@ -12,32 +13,34 @@ function handleRow(tdrmets, id) {
         // get the latest attachment name
         var atchname = Object.keys(body._attachments).sort().pop();
 
-        var saxstrm = sax.createStream();
-        saxstrm.on('opentag', function (node) {
-        });
-        saxstrm.on('attribute', function (attr) {
-        });
-        saxstrm.on('text', function (text) {
-            if (( (this._parser.tag.name === 'SUBFIELD') ||
-                    (this._parser.tag.name === 'SERIES') ||
-                    (this._parser.tag.name === 'TITLE') ||
-                    (this._parser.tag.name === 'SEQUENCE') ||
-                    (this._parser.tag.name === 'LANGUAGE') ) &&
-                    !text.match(/^\s+$/)) {
-                console.log(this._parser.tag, text);
+        // accumulate page information
+        var page_id;
+        var page;
+
+        // define the sax stream handlers
+        var parser = expat.createParser();
+        parser.on('startElement', function(name, attrs) {
+            if (name === 'mets:dmdSec') {
+                page_id = attrs.ID.replace(/^dmd/, id.split('.')[0]);
+            } else if (name === 'page') {
+                page = {_id: page_id, type: 'text', parent: id, text:[]};
             }
         });
-        saxstrm.on('closetag', function (name) {
-            if (name === 'METS:XMLDATA') {
-                this._parser.close();
+        parser.on('text', function(text) {
+            if (page && text.trim()) {
+                page.text.push(text.trim());
             }
         });
-        saxstrm.on('error', function (err) {
-        });
-        saxstrm.on('end', function () {
+        parser.on('endElement', function (name) {
+            if (name === 'page') {
+                page.text = page.text.join(' ');
+                console.log(page);
+                page = null;
+            }
         });
 
-        tdrmets.attachment.get(id, atchname).pipe(saxstrm);
+        // stream the attachment to sax
+        tdrmets.attachment.get(id, atchname).pipe(parser);
 
     });
 }
@@ -46,7 +49,9 @@ function handleRow(tdrmets, id) {
 var cli = require('cli');
 cli.parse({
     couch: ['c', 'couch database URL', 'string', 'http://localhost:5984/tdrmets'],
-    limit: ['l', 'limit simultaneous couch connections', 'int', 5],
+    limit: ['l', 'limit simultaneous couch connections', 'int', 7],
+    docs:  ['d', 'METS documents to process', 'int', 10],
+    start: ['s', 'METS document to start at', 'int', 0],
 });
 cli.main(function(args, options) {
 
@@ -58,7 +63,7 @@ cli.main(function(args, options) {
     var tdrmets = new nano(options.couch);
 
     // loop over all documents
-    tdrmets.list( function (err, body) {
+    tdrmets.list( {limit: options.docs, skip: options.start}, function (err, body) {
         if (err) return console.error(err);
         for (var row of body.rows) {
             handleRow(tdrmets, row.id);
