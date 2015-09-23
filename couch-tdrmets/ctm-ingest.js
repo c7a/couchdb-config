@@ -5,21 +5,20 @@ var nano = require('nano');
 var walk = require('walk');
 var path = require('path');
 
+
 // return the date in the given path, null if none
 function getPathDate(filename) {
 
     var m = filename.match(/\S+\/revisions\/(\w+)(\.partial)?\/\S+/);
     if (m) {
         // Date doesn't parse dates of the form 20120217T135959
-        var d = new Date();
-        d.setUTCFullYear(m[1].slice(0,4));
-        d.setUTCMonth(m[1].slice(4,6)-1);
-        d.setUTCDate(m[1].slice(6,8));
-        d.setUTCHours(m[1].slice(9,11));
-        d.setUTCMinutes(m[1].slice(11,13));
-        d.setUTCSeconds(m[1].slice(13,15)-1);
-        d.setUTCMilliseconds(0);
-        return d.toISOString();
+        // Months are off by one for some reason
+        // Seconds need to be offset by one so that they don't clobber the
+        //  current attachment
+        return new Date( Date.UTC(
+                    m[1].slice(0,4), m[1].slice(4,6) - 1, m[1].slice(6,8),
+                    m[1].slice(9,11), m[1].slice(11,13), m[1].slice(13,15) - 1, 0 )
+                ).toISOString();
     } else {
         return null;
     }
@@ -87,7 +86,7 @@ cli.parse({
     couch: ['c', 'couch database URL', 'string', 'http://localhost:5984/tdrmets'],
     root:  ['r', 'search path root', 'path'],
     days:  ['m', 'modified in last N days', 'int'],
-    limit: ['l', 'limit simultaneous couch connections', 'int', 5],
+    limit: ['l', 'limit simultaneous couch connections', 'int', 7],
 });
 cli.main(function(args, options) {
 
