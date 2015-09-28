@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// $Header: $
+
 var nano = require('nano');
 var expat = require('node-expat');
 
@@ -68,7 +70,7 @@ cli.main(function(args, options) {
     // couch tdrmets database
     var tdrmets = new nano(options.couch);
 
-    // loop over all documents
+    // loop over documents
     tdrmets.view( 'attachments', 'counts',
                 { skip: options.start, limit: options.docs,
                     reduce: false, startkey: 1 },
@@ -80,3 +82,4 @@ cli.main(function(args, options) {
     });
 
 });
+

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// $Header: $
+
 var fs = require('graceful-fs');
 var nano = require('nano');
 var walk = require('walk');
