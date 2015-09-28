@@ -21,9 +21,9 @@ function handleRow(tdrmets, id) {
         var parser = expat.createParser();
         parser.on('startElement', function(name, attrs) {
             if (name === 'mets:dmdSec') {
-                page_id = attrs.ID.replace(/^dmd/, id.split('.')[0]);
+                page_id = id + '.' + attrs.ID.split('.').pop();
             } else if (name === 'page') {
-                page = {_id: page_id, type: 'text', parent: id, text:[]};
+                page = {_id: page_id, parent: id, text:[]};
             }
         });
         parser.on('text', function(text) {
@@ -34,7 +34,13 @@ function handleRow(tdrmets, id) {
         parser.on('endElement', function (name) {
             if (name === 'page') {
                 page.text = page.text.join(' ');
-                console.log(page);
+                tdrmets.insert(page, function(err, body) {
+                    if (err) {
+                        if (err.error !== 'conflict') console.error(err);
+                    } else {
+                        console.log(body);
+                    }
+                });
                 page = null;
             }
         });
@@ -63,7 +69,10 @@ cli.main(function(args, options) {
     var tdrmets = new nano(options.couch);
 
     // loop over all documents
-    tdrmets.list( {limit: options.docs, skip: options.start}, function (err, body) {
+    tdrmets.view( 'attachments', 'counts',
+                { skip: options.start, limit: options.docs,
+                    reduce: false, startkey: 1 },
+                function (err, body) {
         if (err) return console.error(err);
         for (var row of body.rows) {
             handleRow(tdrmets, row.id);
