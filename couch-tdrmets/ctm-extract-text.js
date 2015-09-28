@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 // $Header$
-// $Id$
 
 var nano = require('nano');
 var expat = require('node-expat');

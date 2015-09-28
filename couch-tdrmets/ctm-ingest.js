@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// $Header: $
+// $Header$
 
 var fs = require('graceful-fs');
 var nano = require('nano');
