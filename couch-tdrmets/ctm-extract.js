@@ -38,8 +38,8 @@ function handleRow(tdrmets, cosearch, id) {
                     if (section) section = parseInt(section[0]);
                     break;
                 case 'page':
-                    page = { mdsource: id, mdtype: 'txtmap',
-                            mdsection: section, text: [] };
+                    page = { mdsource: id, mdtype: 'txtmap', mdsection: section,
+                            text: [] };
                     break;
                 default:
                     break;
@@ -174,10 +174,11 @@ function handleRow(tdrmets, cosearch, id) {
             switch (name) {
                 case 'mets:mdWrap':
                     if (mets) { 
+                        mets._id = `${mets.mdtype}.${mets.mdsource}`;
                         cosearch.insert(mets, (err, body) => {
                             if (err && (err.error !== 'conflict')) {
                                 console.error(err);
-                            } else {
+                            } else if (!err) {
                                 console.log(body);
                             }
                         });
@@ -185,11 +186,12 @@ function handleRow(tdrmets, cosearch, id) {
                     }
                     break;
                 case 'page':
+                    page._id = `${page.mdtype}.${page.mdsource}.${page.mdsection}`;
                     page.text = page.text.join(' ');
                     cosearch.insert(page, (err, body) => {
                         if (err && (err.error !== 'conflict')) {
                             console.error(err);
-                        } else {
+                        } else if (!err) {
                             console.log(body);
                         }
                     });
