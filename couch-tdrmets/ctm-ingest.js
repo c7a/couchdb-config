@@ -7,7 +7,6 @@ var nano = require('nano');
 var walk = require('walk');
 var path = require('path');
 
-
 // return the date in the given path, null if none
 function getPathDate(filename) {
 
@@ -32,7 +31,7 @@ function attachFile(tdrmets, filename, atchname, id, rev) {
 
     fs.createReadStream(filename).pipe(
         tdrmets.attachment.insert( id, atchname, null,
-                'text/xml', {rev: rev}, function(err, resp) {
+                'text/xml', {rev: rev}, (err, resp) => {
             if (err) return console.error(err);
             else console.log(resp);
     }));
@@ -47,7 +46,7 @@ function insertFile(tdrmets, filename, days) {
     if (!m) return console.error('No id found in path.');
     var id = m[1] + '.' + m[2];
 
-    fs.stat( filename, function(err, stats) {
+    fs.stat( filename, (err, stats) => {
         if (err) return console.error(err);
 
         var mtime = new Date(stats.mtime);
@@ -58,14 +57,13 @@ function insertFile(tdrmets, filename, days) {
         if (days) {
             var today = new Date();
             var diff = (today - mtime) / (1000*60*60*24);
-            console.log(diff,days);
             if (diff > days) return;
         }
 
-        tdrmets.insert( {_id: id}, function(err, resp) {
+        tdrmets.insert( {_id: id}, (err, resp) => {
             if (err) { 
                 if (err.error === 'conflict') {
-                    tdrmets.get(id, function(err, body) {
+                    tdrmets.get(id, (err, body) => {
                         if (err) return console.error(err);
                         if (!body._attachments || !body._attachments[atchname]) {
                             attachFile(tdrmets, filename, atchname, id, body._rev);
@@ -78,6 +76,7 @@ function insertFile(tdrmets, filename, days) {
                 attachFile(tdrmets, filename, atchname, id, resp.rev);
             }
         });
+
     });
 
 }
@@ -85,19 +84,21 @@ function insertFile(tdrmets, filename, days) {
 // command line arguments
 var cli = require('cli');
 cli.parse({
-    couch: ['c', 'couch database URL', 'string', 'http://localhost:5984/tdrmets'],
-    limit: ['l', 'limit simultaneous couch connections', 'int', 7],
-    root:  ['r', 'search path root', 'path'],
-    days:  ['m', 'modified in last N days', 'int'],
+
+    tdrmets: ['t', 'tdrmets database URL', 'string', 'http://localhost:5984/tdrmets'],
+    limit:   ['l', 'limit simultaneous couch connections', 'int', 7],
+    root:    ['r', 'search path root', 'path'],
+    days:    ['m', 'modified in last N days', 'int'],
+
 });
-cli.main(function(args, options) {
+cli.main((args, options) => {
 
     // limit the number of couch connections
     var http = require('http');
     http.globalAgent.maxSockets = options.limit;
 
     // couch tdrmets database 
-    var tdrmets = new nano(options.couch);
+    var tdrmets = new nano(options.tdrmets);
 
     if (options.root) {
 
@@ -106,11 +107,12 @@ cli.main(function(args, options) {
             // this makes assumptions about the tdrmets directory layout
             filters: ["incoming", "trashcan", "files"],
             listeners: {
-                names: function (root, names) {
+                names: (root, names) => {
                     if (root.match(/\/data\//)) {
                         var i = names.indexOf('metadata.xml');
                         if (i >= 0) {
-                            insertFile(tdrmets, path.join(root, names[i]), options.days);
+                            insertFile( tdrmets, path.join(root, names[i]),
+                                    options.days );
                         }
                     }
                 }

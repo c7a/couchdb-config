@@ -15,7 +15,7 @@ function handleRow(tdrmets, id) {
         // get the latest attachment name
         var atchname = Object.keys(body._attachments).sort().pop();
 
-        // accumulate page information
+        // accumulate page data
         var page_id;
         var page;
 
@@ -25,7 +25,7 @@ function handleRow(tdrmets, id) {
             if (name === 'mets:dmdSec') {
                 page_id = id + '.' + attrs.ID.split('.').pop();
             } else if (name === 'page') {
-                page = {_id: page_id, parent: id, text:[]};
+                page = {_id: page_id, mdsource: id, mdtype: 'txtmap', text: []};
             }
         });
         parser.on('text', function(text) {
@@ -38,6 +38,7 @@ function handleRow(tdrmets, id) {
                 page.text = page.text.join(' ');
                 tdrmets.insert(page, function(err, body) {
                     if (err) {
+                        // don't replace data ?
                         if (err.error !== 'conflict') console.error(err);
                     } else {
                         console.log(body);

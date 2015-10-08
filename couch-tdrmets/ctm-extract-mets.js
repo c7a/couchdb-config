@@ -1,146 +1,207 @@
 #!/usr/bin/env node
 
-// $Header: http://svn.c7a.ca/svn/c7a/tdr/trunk/couch-tdrmets/ctm-extract-text.js 4833 2015-09-28 20:36:48Z darcy $
+// $Header: $
 
 var nano = require('nano');
 var sax = require('sax');
 
-// get each row id, stream the latest attachment through a sax parser
-function handleRow(tdrmets, id) {
+// create an array, push data if not there
+function pusharr(arr, data) {
+    if (!arr) arr = [];
+    if (arr.indexOf(data) < 0) arr.push(data);
+    return arr;
+}
 
-    tdrmets.get( id, function (err, body) {
+// get each row id, stream the latest attachment through a sax parser
+function handleRow(tdrmets, cosearch, id) {
+
+    tdrmets.get( id, (err, body) => {
         if (err) return console.error(err);
 
         // get the latest attachment name
         if (!body._attachments) return;
         var atchname = Object.keys(body._attachments).sort().pop();
 
-        // accumulate mets information
+        // accumulate mets data
         var mets = {};
+        var page;
+        var section;
 
         // define the sax stream handlers
-        var parser = sax.createStream();
-        parser.on('text', function (text) {
+        var parser = sax.createStream({trim: true, normalize: true});
+
+        parser.on( 'opentag', node => {
+
+            switch (node.name) {
+                case 'mets:dmdSec':
+                    section = node.attributes.ID.split('.').pop().match(/\d+$/);
+                    if (section) section = parseInt(section[0]);
+                    break;
+                case 'page':
+                    page = { mdsource: id, mdtype: 'txtmap',
+                            mdsection: section, text: [] };
+                    break;
+                default:
+                    break;
+            }
+
+        });
+        parser.on( 'text', function (text) {
             if (!text.trim()) return;
-            if ( this._parser.tags.some( function (a) {
-                    return (a.name === 'ISSUEINFO'); } ) ) {
 
+            if (this._parser.tags.some(a => (a.name === 'issueinfo'))) {
+
+                mets.mdsource = id;
                 mets.mdtype = 'issueinfo';
+
                 var tagname = this._parser.tag.name;
+                var tagnew = tagname;
                 switch (tagname) {
-                    case 'COVERAGE':
-                    case 'IDENTIFIER':
-                    case 'LANGUAGE':
-                    case 'NOTE':
-                    case 'PUBLISHED':
-                    case 'PUBSTATEMENT':
-                    case 'SEQUENCE':
-                    case 'SERIES':
-                    case 'SOURCE':
-                    case 'TITLE':
-                        mets[tagname.toLowerCase()] = text;
+                    case 'identifier': case 'language': case 'note':
+                    case 'pubstatement': case 'source': case 'title':
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
+                    case 'coverage':
+                        tagnew = 'note';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
+                        break;
+                    // NOTE: not doing any date mangling
+                    case 'published':
+                        tagnew = 'date';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
+                        break;
+                    case 'sequence': case 'series':
                     default:
                         break;
                 }
 
-            } else if ( this._parser.tags.some( function (a) {
-                    return (a.name === 'SIMPLEDC'); } ) ) {
+            } else if (this._parser.tags.some(a => (a.name === 'simpledc'))) {
 
-                mets.mdtype = 'dc';
+                mets.mdsource = id;
+                mets.mdtype = 'dublincore';
+
                 var tagname = this._parser.tag.name;
+                var tagnew = tagname.slice(3);
                 switch (tagname) {
-                    case 'DC:CONTRIBUTOR':
-                    case 'DC:COVERAGE':
-                    case 'DC:CREATOR':
-                    case 'DC:DATE':
-                    case 'DC:DESCRIPTION':
-                    case 'DC:FORMAT':
-                    case 'DC:IDENTIFIER':
-                    case 'DC:LANGUAGE':
-                    case 'DC:PUBLISHER':
-                    case 'DC:RELATION':
-                    case 'DC:RIGHTS':
-                    case 'DC:SOURCE':
-                    case 'DC:SUBJECT':
-                    case 'DC:TITLE':
-                    case 'DC:TYPE':
-                        mets[tagname.slice(3).toLowerCase()] = text;
+                    // NOTE: not doing any date mangling
+                    case 'dc:creator': case 'dc:date': case 'dc:description':
+                    case 'dc:identifier': case 'dc:language': case 'dc:rights':
+                    case 'dc:source': case 'dc:subject': case 'dc:title':
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
+                    case 'dc:contributor':
+                        tagnew = 'source';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
+                        break;
+                    case 'dc:publisher':
+                        tagnew = 'pubstatement';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
+                        break;
+                    case 'dc:coverage': case 'dc:relation': case 'dc:type':
+                        tagnew = 'note';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
+                        break;
+                    case 'dc:format':
                     default:
                         break;
                 }
 
-            } else if ( this._parser.tags.some( function (a) {
-                    return (a.name === 'DATAFIELD'); } ) ) {
+            } else if (this._parser.tags.some(a => (a.name === 'datafield'))) {
 
-                mets.mdtype = 'marc';
-                var popattrs = this._parser.tags.pop().attributes;
-            	switch (popattrs.TAG) {
+                mets.mdsource = id;
+                mets.mdtype = 'marc21';
+
+            	var tagname = this._parser.tags.pop().attributes.tag;
+                var tagnew = tagname;
+            	switch (tagname) {
+                    // NOTE: not doing any language code mangling
                     case '041':
-                        mets.language = text;
+                        tagnew = 'language';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '090':
-                        mets.identifier = text;
+                        tagnew = 'identifier';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '100':
-                        mets.creator = text;
+                        tagnew = 'creator';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '110': case '111': case '130': case '245':
                     case '246': case '440': case '730': case '740':
                     case '830': case '840':
-                        mets.title = text;
+                        tagnew = 'title';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '250': case '362': case '500': case '504':
                     case '505': case '510': case '515': case '520':
                     case '534': case '546': case '580': case '787':
                     case '800': case '810': case '811':
-                        mets.note = text;
+                        tagnew = 'note';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '260':
-                        mets.pubstatement = text;
+                        tagnew = 'pubstatement';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '540':
-                        mets.rights = text;
+                        tagnew = 'rights';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '600': case '610': case '630': case '650':
                     case '651':
-                        mets.subject = text;
+                        tagnew = 'subject';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
                     case '700': case '710': case '711':
-                        mets.creator = text;
+                        tagnew = 'creator';
+                        mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
-                    case '033':
-                    case '035': case '040': case '043': case '300':
-                    case '490': case '533': case '945': default:
-                        // ignored
+                    case '033': case '035': case '040': case '043':
+                    case '300': case '490': case '533': case '945':
+                    default:
                         break;
                 }
 
+            } else if (page) {
+
+                page.text.push(text);
+
             }
         });
-        parser.on('closetag', function (name) {
-            if (name === 'METS:MDWRAP') {
-            	if (Object.keys(mets).length) {
-                    mets["source"] = id;
-                    tdrmets.insert(mets, function(err, body) {
-                        if (err) {
-                            if (err.error !== 'conflict') console.error(err);
+        parser.on( 'closetag', name => {
+
+            switch (name) {
+                case 'mets:mdWrap':
+                    if (mets) { 
+                        cosearch.insert(mets, (err, body) => {
+                            if (err && (err.error !== 'conflict')) {
+                                console.error(err);
+                            } else {
+                                console.log(body);
+                            }
+                        });
+                        mets = null;
+                    }
+                    break;
+                case 'page':
+                    page.text = page.text.join(' ');
+                    cosearch.insert(page, (err, body) => {
+                        if (err && (err.error !== 'conflict')) {
+                            console.error(err);
                         } else {
                             console.log(body);
                         }
                     });
-                }
-                mets = null;
-                parser.end();
-                parser.removeAllListeners();
+                    page = null;
+                    break;
+                default:
+                    break;
             }
+
         });
-        parser.on('error', function (err) {
-            // handles the parser.end() above
-        });
-        parser.on('end', function () {
-            // handles the parser.end() above
+        parser.on( 'error', function (err) {
+            // ignore parsing errors
         });
 
         // stream the attachment to sax
@@ -152,10 +213,14 @@ function handleRow(tdrmets, id) {
 // command line arguments
 var cli = require('cli');
 cli.parse({
-    couch: ['c', 'couch database URL', 'string', 'http://localhost:5984/tdrmets'],
-    limit: ['l', 'limit simultaneous couch connections', 'int', 7],
+
+    tdrmets:  ['t', 'tdrmets database URL', 'string', 'http://localhost:5984/tdrmets'],
+    cosearch: ['c', 'cosearch database URL', 'string', 'http://localhost:5984/cosearch'],
+    limit:    ['l', 'limit simultaneous couch connections', 'int', 7],
+
     docs:  ['d', 'METS documents to process', 'int', 10],
     start: ['s', 'METS document to start at', 'int', 0],
+
 });
 cli.main(function(args, options) {
 
@@ -163,18 +228,20 @@ cli.main(function(args, options) {
     var http = require('http');
     http.globalAgent.maxSockets = options.limit;
 
-    // couch tdrmets database
-    var tdrmets = new nano(options.couch);
+    // couch databases
+    var tdrmets = new nano(options.tdrmets);
+    var cosearch = new nano(options.cosearch);
 
     // loop over documents
-    tdrmets.view( 'attachments', 'counts',
-                { skip: options.start, limit: options.docs,
-                    reduce: false, startkey: 1 },
-                function (err, body) {
+    tdrmets.view( 'attachments', 'dates_latest',
+                { skip: options.start, limit: options.docs, reduce: false },
+                (err, body) => {
         if (err) return console.error(err);
+
         for (var row of body.rows) {
-            handleRow(tdrmets, row.id);
+            handleRow(tdrmets, cosearch, row.id);
         }
+
     });
 
 });
