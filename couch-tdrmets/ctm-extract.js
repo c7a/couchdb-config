@@ -65,7 +65,6 @@ function handleRow(tdrmets, cosearch, id) {
                         tagnew = 'note';
                         mets[tagnew] = pusharr(mets[tagnew], text);
                         break;
-                    // NOTE: not doing any date mangling
                     case 'published':
                         tagnew = 'date';
                         mets[tagnew] = pusharr(mets[tagnew], text);
@@ -83,7 +82,6 @@ function handleRow(tdrmets, cosearch, id) {
                 var tagname = this._parser.tag.name;
                 var tagnew = tagname.slice(3);
                 switch (tagname) {
-                    // NOTE: not doing any date mangling
                     case 'dc:creator': case 'dc:date': case 'dc:description':
                     case 'dc:identifier': case 'dc:language': case 'dc:rights':
                     case 'dc:source': case 'dc:subject': case 'dc:title':
@@ -114,7 +112,6 @@ function handleRow(tdrmets, cosearch, id) {
             	var tagname = this._parser.tags.pop().attributes.tag;
                 var tagnew = tagname;
             	switch (tagname) {
-                    // NOTE: not doing any language code mangling
                     case '041':
                         tagnew = 'language';
                         mets[tagnew] = pusharr(mets[tagnew], text);
@@ -175,6 +172,23 @@ function handleRow(tdrmets, cosearch, id) {
                 case 'mets:mdWrap':
                     if (mets) { 
                         mets._id = `${mets.mdtype}.${mets.mdsource}`;
+                        // language code normalization
+                        for (i in mets.language) {
+                            if (mets.language[i].length % 3 == 0) {
+                                mets.language[i].match(/.{1,3}/g);
+                            } else {
+                                mets.language[i] = 'err';
+                            }
+                        }
+                        mets.language =
+                            mets.language
+                                .reduce((a,b) => {return a.concat(b);})
+                                .map((a) => {return a.toLowerCase())
+                                .map((a) => {return (a === 'fre') ? 'fra' : a;})
+                                .map((a) => {return (a === 'ang') ? 'eng' : a;})
+                                .sort()
+                                .filter((v,i,a) => {return (v === a[i-1]) ? 0 : 1;});
+                        // NOTE: not doing any date mangling
                         cosearch.insert(mets, (err, body) => {
                             if (err && (err.error !== 'conflict')) {
                                 console.error(err);
