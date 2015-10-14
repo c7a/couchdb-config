@@ -169,26 +169,52 @@ function handleRow(tdrmets, cosearch, id) {
         parser.on( 'closetag', name => {
 
             switch (name) {
+
                 case 'mets:mdWrap':
                     if (mets) { 
                         mets._id = `${mets.mdtype}.${mets.mdsource}`;
+
                         // language code normalization
                         for (i in mets.language) {
                             if (mets.language[i].length % 3 == 0) {
-                                mets.language[i].match(/.{1,3}/g);
+                                mets.language[i] = mets.language[i].match(/.{1,3}/g);
                             } else {
                                 mets.language[i] = 'err';
                             }
                         }
-                        mets.language =
-                            mets.language
+                        if (mets.language && (mets.language.length > 0)) {
+                            mets.language = mets.language
                                 .reduce((a,b) => {return a.concat(b);})
-                                .map((a) => {return a.toLowerCase())
+                                .map((a) => {return a.toLowerCase();})
                                 .map((a) => {return (a === 'fre') ? 'fra' : a;})
                                 .map((a) => {return (a === 'ang') ? 'eng' : a;})
                                 .sort()
-                                .filter((v,i,a) => {return (v === a[i-1]) ? 0 : 1;});
-                        // NOTE: not doing any date mangling
+                                .filter((v, i, a) => {return (v === a[i-1]) ? 0 : 1;});
+                        }
+
+                        // date code normalization
+                        if (mets.date) {
+                            var min = mets.date[0]
+                                    .split(/-/)
+                                    .map((a) => {return parseInt(a)});
+                            if (min.length == 1) min.push(1, 1);
+                            else if (min.length == 2) min.push(1);
+                            mets.date[0] = new Date(min[0], min[1]-1, min[2])
+                                    .toJSON()
+                                    .split(/T/)[0];
+                            if (mets.date[1]) {
+                                var max = mets
+                                    .date[1]
+                                    .split(/-/)
+                                    .map((a) => {return parseInt(a)});
+                                if (max.length == 1) max.push(12, 31);
+                                else if (max.length == 2) {max[1]++; max.push(0);}
+                                mets.date[1] = new Date(max[0], max[1]-1, max[2])
+                                    .toJSON()
+                                    .split(/T/)[0];
+                            }
+                        }
+                        
                         cosearch.insert(mets, (err, body) => {
                             if (err && (err.error !== 'conflict')) {
                                 console.error(err);
@@ -196,12 +222,15 @@ function handleRow(tdrmets, cosearch, id) {
                                 console.log(body);
                             }
                         });
+
                         mets = null;
                     }
                     break;
+
                 case 'page':
                     page._id = `${page.mdtype}.${page.mdsource}.${page.mdsection}`;
                     page.text = page.text.join(' ');
+
                     cosearch.insert(page, (err, body) => {
                         if (err && (err.error !== 'conflict')) {
                             console.error(err);
@@ -209,10 +238,13 @@ function handleRow(tdrmets, cosearch, id) {
                             console.log(body);
                         }
                     });
+
                     page = null;
                     break;
+
                 default:
                     break;
+
             }
 
         });
@@ -226,14 +258,13 @@ function handleRow(tdrmets, cosearch, id) {
     });
 }
 
-// command line arguments
 var cli = require('cli');
 cli.parse({
 
+    // command line arguments
     tdrmets:  ['t', 'tdrmets database URL', 'string', 'http://localhost:5984/tdrmets'],
     cosearch: ['c', 'cosearch database URL', 'string', 'http://localhost:5984/cosearch'],
     limit:    ['l', 'limit simultaneous couch connections', 'int', 7],
-
     docs:  ['d', 'METS documents to process', 'int', 10],
     start: ['s', 'METS document to start at', 'int', 0],
 
