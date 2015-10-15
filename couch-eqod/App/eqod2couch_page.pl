@@ -66,7 +66,7 @@ sub process{
 				}
 			}
 		push ($doc->{tags}, {tags=> \%types});	
-	json_eqod ($reel.$page, $doc);	
+	json_eqod ($reel.".".$page, $doc);	
 
 		}
 	}	
