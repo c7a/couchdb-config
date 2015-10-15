@@ -38,11 +38,12 @@ sub process{
 	my %page_data = ();
 	foreach my $reel (keys(%csv_data)){	
 		#json structure
-		my $doc = {reel => $reel, psource => 'eqod', pages => []};
 		
 		# process each page
 		%page_data = get_page($reel, $csv_data{$reel});
 		foreach my $page (sort({$a <=> $b} keys(%page_data))){
+			my $doc = {reel => $reel, page => $page, psource => 'eqod', tags => []};
+			
 			my $properties = [];
 			my %types = ();
 			get_properties ($properties, $page_data{$page});
@@ -64,9 +65,10 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-		push ($doc->{pages}, {page => $page, tags => \%types});	
+		push ($doc->{tags}, {tags=> \%types});	
+	json_eqod ($reel.$page, $doc);	
+
 		}
-	json_eqod ($reel, $doc);	
 	}	
 }
 sub get_reel{
@@ -212,12 +214,12 @@ sub remove_duplicates_array{
 	return \%values;
 }
 sub json_eqod {
-	my($reel, $data) = @_;
+	my($uuid, $data) = @_;
 		
 	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
 	#say $json;
 	my $db = CouchDB->new('127.0.0.1', '5984');
-	my $attachment = $db->put("eqod/$reel/", $json);
+	my $attachment = $db->put("eqod/$uuid/", $json);
 	say $attachment;
 	die;
 }
