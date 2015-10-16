@@ -38,7 +38,7 @@ sub process{
 	my %page_data = ();
 	foreach my $reel (keys(%csv_data)){	
 		#json structure
-		my $doc = {reel => $reel, psource => 'eqod', pages => []};
+		my $doc = {reel => $reel, tag_source => 'eqod', pages => []};
 		
 		# process each page
 		%page_data = get_page($reel, $csv_data{$reel});

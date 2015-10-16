@@ -42,7 +42,6 @@ sub process{
 		# process each page
 		%page_data = get_page($reel, $csv_data{$reel});
 		foreach my $page (sort({$a <=> $b} keys(%page_data))){
-			my $doc = {reel => $reel, page => $page, psource => 'eqod', tags => []};
 			
 			my $properties = [];
 			my %types = ();
@@ -65,8 +64,8 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-		push ($doc->{tags}, {tags=> \%types});	
-	json_eqod ($reel.".".$page, $doc);	
+		my $doc = {item => $reel, page => $page, tag_source => 'eqod', status => "active", date_added => time, tags => \%types};
+	    json_eqod ($reel.".".$page."|eqod", $doc);	
 
 		}
 	}	
