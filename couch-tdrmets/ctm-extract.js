@@ -22,10 +22,9 @@ function handleRow(tdrmets, cosearch, id) {
         if (!body._attachments) return;
         var atchname = Object.keys(body._attachments).sort().pop();
 
-        // accumulate mets and page data
+        // accumulate mets data and page text and labels
         var mets = {};
-        var page;
-        var section;
+        var pagetext;
 
         // define sax stream handlers
  
@@ -33,13 +32,14 @@ function handleRow(tdrmets, cosearch, id) {
 
         parser.on( 'opentag', node => {
             switch (node.name) {
-                case 'mets:dmdSec':
-                    section = node.attributes.ID.split('.').pop().match(/\d+$/);
-                    if (section) section = parseInt(section[0]);
-                    break;
                 case 'page':
-                    page = { mdsource: id, mdtype: 'txtmap', mdsection: section,
-                            text: [] };
+                    pagetext = [];
+                    break;
+                case 'mets:div':
+                    if (node.attributes.TYPE === 'page') {
+                        if (!mets.labels) mets.labels = [];
+                        mets.labels.push(node.attributes.LABEL);
+                    }
                     break;
                 default:
                     break;
@@ -102,6 +102,7 @@ function handleRow(tdrmets, cosearch, id) {
             } else if (this._parser.tags.some(a => (a.name === 'datafield'))) {
                 mets.mdsource = id;
                 mets.mdtype = 'marc21';
+ 
             	var tagname = this._parser.tags.pop().attributes.tag;
                 var tagnew = tagname;
             	switch (tagname) {
@@ -153,8 +154,8 @@ function handleRow(tdrmets, cosearch, id) {
                         break;
                 }
 
-            } else if (page) {
-                page.text.push(text);
+            } else if (pagetext) {
+                pagetext.push(text);
             }
         });
 
@@ -163,7 +164,7 @@ function handleRow(tdrmets, cosearch, id) {
 
                 case 'mets:mdWrap':
                     if (mets) { 
-                        mets._id = `${mets.mdtype}.${mets.mdsource}`;
+                        mets._id = mets.mdsource;
 
                         // language code normalization
                         for (i in mets.language) {
@@ -205,45 +206,36 @@ function handleRow(tdrmets, cosearch, id) {
                                     .split(/T/)[0];
                             }
                         }
-                        
-                        cosearch.insert(mets, (err, body) => {
-                            if (err && (err.error !== 'conflict')) {
-                                console.error(err);
-                            } else if (!err) {
-                                console.log(body);
-                            }
-                        });
-
-                        mets = null;
                     }
                     break;
 
                 case 'page':
-                    page._id = `${page.mdtype}.${page.mdsource}.${page.mdsection}`;
-                    page.text = page.text.join(' ');
-
-                    cosearch.insert(page, (err, body) => {
-                        if (err && (err.error !== 'conflict')) {
-                            console.error(err);
-                        } else if (!err) {
-                            console.log(body);
-                        }
-                    });
-
-                    page = null;
+                    if (!mets.pages) mets.pages = [];
+                    mets.pages.push(pagetext.join(' '));
+                    pagetext = null;
                     break;
 
                 default:
                     break;
-
             }
         });
+
 
         parser.on( 'error', function (err) {
             // ignore parsing errors
         });
 
-        // stream the attachment to sax
+        parser.on( 'end', function () {
+            cosearch.insert( mets, (err, body) => {
+                if (err && (err.error !== 'conflict')) {
+                    console.error(err);
+                } else if (!err) {
+                    console.log(body);
+                }
+            });
+        });
+
+        // stream the attachment through the sax parser
         tdrmets.attachment.get(id, atchname).pipe(parser);
 
     });
