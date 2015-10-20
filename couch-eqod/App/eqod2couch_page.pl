@@ -64,7 +64,7 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-		my $doc = {item => $reel, page => $page, tag_source => 'eqod', status => "active", date_added => time, tags => \%types};
+		my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => time, tags => \%types};
 	    json_eqod ($reel.".".$page."|eqod", $doc);	
 
 		}
@@ -74,6 +74,7 @@ sub get_reel{
 	my($row) = @_;
 	
 	# Reel information can only be extracted from the url column (#24)
+	#TODO Test which row contains URL
 	foreach ($row->[24]){
 		#if the value matches a url sequence then extract the reel number
 		if ($row->[24] =~ m{(.*/)([^?]*)}m){ 
@@ -103,14 +104,14 @@ sub get_properties{
 	
 	# Eqod columns to Slim properties
 	my %eqod2slim = (
-		'Author' => 'tag:person',
-		'Place' => 'tag:place',
-        'Recipient' => 'tag:person',
-        'Name' => 'tag:person',
-        'Place' => 'tag:place',
-        'Family Name' => 'tag:person',
-        'Year1' => 'tag:date', 	#TODO: eventually will update these dates to represent an ISO range
-        'Year2' => 'tag:date',
+		'Author' => 'person',
+		'Place' => 'place',
+        'Recipient' => 'person',
+        'Name' => 'person',
+        'Place' => 'place',
+        'Family Name' => 'person',
+        'Year1' => 'date', 	#TODO: eventually will update these dates to represent an ISO range
+        'Year2' => 'date',
         'NoteBook' => 'tag', #Notebook is a potentially useful category for developing micro-collections - ways of organizing pages within reels (items)
         'Content/Comment' => 'tag', #tag is used as a catchall property for eqod, but these are not really tag categories and should be updated in later versions
 	);
@@ -120,29 +121,29 @@ sub get_properties{
 		if (@$page[24] =~ m{(.*/)([^?]*)}m){
 		
 			if (@$page[1]){
-				push (@$properties, add_eqod_property("tag:person", @$page[1])); #author
+				push (@$properties, add_eqod_property("person", @$page[1])); #author
 			}
 			if (@$page[2]){
-				push (@$properties, add_eqod_property("tag:person", @$page[2])); #recipient
+				push (@$properties, add_eqod_property("person", @$page[2])); #recipient
 			}
 			if (@$page[3]){
-				push (@$properties, add_eqod_property("tag:person", @$page[3])); #name
+				push (@$properties, add_eqod_property("person", @$page[3])); #name
 			}
 			if (@$page[4]){	
-				push (@$properties, add_eqod_property("tag:place", @$page[4])); #place
+				push (@$properties, add_eqod_property("place", @$page[4])); #place
 			}
 			if (@$page[6]){	
-				push (@$properties, add_eqod_property("tag:person", @$page[6])); #family name
+				push (@$properties, add_eqod_property("person", @$page[6])); #family name
 			}
 			
 			if (@$page[8]){ #year1
-				my $date = get_date(@$page[8], @$page[10], @$page[9]);	 #tag:date for year2
-				push (@$properties, add_eqod_property("tag:date", $date));
+				my $date = get_date(@$page[8], @$page[10], @$page[9]);	 #date for year2
+				push (@$properties, add_eqod_property("date", $date));
 			}
 		
 			if (@$page[11]){ #year2
-				my $date = get_date(@$page[11], @$page[13], @$page[12]);	 #tag:date for year2
-				push (@$properties, add_eqod_property("tag:date", $date));
+				my $date = get_date(@$page[11], @$page[13], @$page[12]);	 #date for year2
+				push (@$properties, add_eqod_property("date", $date));
 			}
 
 			if (@$page[22]){
@@ -161,12 +162,12 @@ sub get_date{
 	
 	# year values that start with 'circa' or 'after' - these will be handled as a single year
 	if ($y =~ m{^[Cc]irca}m || $y =~ m{^[Aa]fter}m){
-		$date = $y; #tag:date
+		$date = $y; #date
 	}
 	
 	# year values that contain question marks 
 	elsif ($y =~ m{\?}m){
-		$date = $y; #tag:date			
+		$date = $y; #date			
 	}
 	
 	# year values that are regular format: yyyy
@@ -220,7 +221,6 @@ sub json_eqod {
 	my $db = CouchDB->new('127.0.0.1', '5984');
 	my $attachment = $db->put("eqod/$uuid/", $json);
 	say $attachment;
-	die;
 }
 
 
