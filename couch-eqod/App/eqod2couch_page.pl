@@ -64,7 +64,7 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-		my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => time, tags => \%types};
+		my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => time, tag => \%types};
 	    json_eqod ($reel.".".$page."|eqod", $doc);	
 
 		}
@@ -219,8 +219,9 @@ sub json_eqod {
 	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
 	#say $json;
 	my $db = CouchDB->new('127.0.0.1', '5984');
-	my $attachment = $db->put("eqod/$uuid/", $json);
+	my $attachment = $db->put("externalmeta/$uuid/", $json);
 	say $attachment;
+	die;
 }
 
 
