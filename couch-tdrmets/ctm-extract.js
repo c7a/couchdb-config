@@ -22,16 +22,16 @@ function handleRow(tdrmets, cosearch, id) {
         if (!body._attachments) return;
         var atchname = Object.keys(body._attachments).sort().pop();
 
-        // accumulate mets data
+        // accumulate mets and page data
         var mets = {};
         var page;
         var section;
 
-        // define the sax stream handlers
+        // define sax stream handlers
+ 
         var parser = sax.createStream({trim: true, normalize: true});
 
         parser.on( 'opentag', node => {
-
             switch (node.name) {
                 case 'mets:dmdSec':
                     section = node.attributes.ID.split('.').pop().match(/\d+$/);
@@ -44,16 +44,13 @@ function handleRow(tdrmets, cosearch, id) {
                 default:
                     break;
             }
-
         });
+
         parser.on( 'text', function (text) {
             if (!text.trim()) return;
-
             if (this._parser.tags.some(a => (a.name === 'issueinfo'))) {
-
                 mets.mdsource = id;
                 mets.mdtype = 'issueinfo';
-
                 var tagname = this._parser.tag.name;
                 var tagnew = tagname;
                 switch (tagname) {
@@ -75,10 +72,8 @@ function handleRow(tdrmets, cosearch, id) {
                 }
 
             } else if (this._parser.tags.some(a => (a.name === 'simpledc'))) {
-
                 mets.mdsource = id;
                 mets.mdtype = 'dublincore';
-
                 var tagname = this._parser.tag.name;
                 var tagnew = tagname.slice(3);
                 switch (tagname) {
@@ -105,10 +100,8 @@ function handleRow(tdrmets, cosearch, id) {
                 }
 
             } else if (this._parser.tags.some(a => (a.name === 'datafield'))) {
-
                 mets.mdsource = id;
                 mets.mdtype = 'marc21';
-
             	var tagname = this._parser.tags.pop().attributes.tag;
                 var tagnew = tagname;
             	switch (tagname) {
@@ -161,13 +154,11 @@ function handleRow(tdrmets, cosearch, id) {
                 }
 
             } else if (page) {
-
                 page.text.push(text);
-
             }
         });
-        parser.on( 'closetag', name => {
 
+        parser.on( 'closetag', name => {
             switch (name) {
 
                 case 'mets:mdWrap':
@@ -246,8 +237,8 @@ function handleRow(tdrmets, cosearch, id) {
                     break;
 
             }
-
         });
+
         parser.on( 'error', function (err) {
             // ignore parsing errors
         });
