@@ -12,6 +12,8 @@ use Text::CSV;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use CouchDB;
+use DateTime::Format::Strptime;
+
 
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
@@ -64,7 +66,9 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-		my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => time, tag => \%types};
+		my $dt = DateTime->from_epoch( epoch => time );
+		#print $dt->datetime(), "\n";
+		my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => $dt->datetime(), tag => \%types};
 	    json_eqod ($reel.".".$page."|eqod", $doc);	
 
 		}
