@@ -263,7 +263,7 @@ cli.main(function(args, options) {
     var cosearch = new nano(options.cosearch);
 
     // loop over documents
-    tdrmets.view( 'attachments', 'dates_latest',
+    tdrmets.view( 'attachments', 'latest',
                 { skip: options.start, limit: options.docs, reduce: false },
                 (err, body) => {
         if (err) return console.error(err);
