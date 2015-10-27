@@ -1,8 +1,11 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
 
 use LWP::UserAgent;
-use JSON;
 use Getopt::Long;
+use JSON;
 
 my $tdrmeta = 'http://mini.office.c7a.ca:5984/tdrmeta';
 my $co_search = 'http://mini.office.c7a.ca:5984/co_search';
@@ -16,8 +19,8 @@ GetOptions( 'tdrmeta=s' => \$tdrmeta,
 
 my $ua = LWP::UserAgent->new;
 my $req = HTTP::Request->new( GET => $tdrmeta . 
-        '/_design/attachments/_view/latest' .
-        "?reduce=false&stale=ok&skip=$skip&limit=$limit" );
+            '/_design/attachments/_view/latest' .
+            "?reduce=false&stale=ok&skip=$skip&limit=$limit" );
 my $res = $ua->request($req);
 
 if ($res->is_success) {
@@ -25,8 +28,8 @@ if ($res->is_success) {
 
     foreach my $i (0..$limit-1) {
         $req = HTTP::Request->new( GET => $tdrmeta .
-                '/' . $list->{rows}[$i]->{id} .
-                '/' . $list->{rows}[$i]->{value} );
+                    '/' . $list->{rows}[$i]->{id} .
+                    '/' . $list->{rows}[$i]->{value} );
         $res = $ua->request($req);
 
         # TODO: do stuff with $res-content (XML) return $id and $content (JSON)
