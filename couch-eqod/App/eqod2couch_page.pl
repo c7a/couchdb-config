@@ -13,52 +13,62 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use CouchDB;
 use DateTime::Format::Strptime;
-
+use Data::Dumper;
 
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
 	open my $fh, "<:encoding(utf8)", $filename or die "Can't open ".$filename."\n";
-	process($fh, $csv);	
+	my $header = $csv->getline ($fh);
+	print join("-", @$header), "\n\n";
+	process($fh, $csv, $header);	
 }
 exit;
-
+			
+		
 sub process{
-	my($fh, $csv) = @_;
-	
-	# Get reel information and add corresponding pages to each reel
+	my ($fh, $csv, $header) = @_;
 	my %csv_data = ();
-	while (my $row = $csv->getline($fh)) {
+	
+	while (my $row = $csv->getline($fh)){
+		#get reel
 		my $reel = get_reel($row);
 		next unless ($reel);
 		unless ($csv_data {$reel}){	
 			$csv_data {$reel} = [];
 		}
-		push ($csv_data {$reel}, $row);	 
+	push ($csv_data {$reel}, $row);	 	
 	}
 	
+
+	#get page
 	# Create json document for each reel, containing corresponding pages and tags
 	my %page_data = ();
 	foreach my $reel (keys(%csv_data)){	
-		#json structure
-		
+
 		# process each page
-		%page_data = get_page($reel, $csv_data{$reel});
+		%page_data = get_page($csv_data{$reel});
+
 		foreach my $page (sort({$a <=> $b} keys(%page_data))){
-			
+
+			#get properties
+				
 			my $properties = [];
 			my %types = ();
-			get_properties ($properties, $page_data{$page});
-			
+			#TODO: add if there is a page
+			get_properties ($properties, $page_data{$page}, $header);
+			#print Dumper($properties);
+					
 			#combine properties under the same tag
 			foreach my $prop(@$properties){	
 				my $value = $prop->{'value'};
 				my $type = $prop->{'type'};
+				warn $type;
+				
 				unless ($types{$type}){
-					$types{$type} = [];
+						$types{$type} = [];
 				}
 				push ($types{$type}, $value);
 			} 
-			
 			#remove duplicate values
 			foreach my $tag (keys(%types)){
 				foreach my $value ($types{$tag}){
@@ -66,31 +76,39 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-		my $dt = DateTime->from_epoch( epoch => time );
-		#print $dt->datetime(), "\n";
-		my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => $dt->datetime(), tag => \%types};
-	    json_eqod ($reel.".".$page."|eqod", $doc);	
-
+			#create json
+			my $dt = DateTime->from_epoch( epoch => time );
+			my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => $dt->datetime(), tag => \%types};
+		    json_eqod ($reel.".".$page."|eqod", $doc);	
+	
 		}
 	}	
 }
 sub get_reel{
 	my($row) = @_;
-	
+
 	# Reel information can only be extracted from the url column (#24)
-	#TODO Test which row contains URL
-	foreach ($row->[24]){
+	foreach ($row){
 		#if the value matches a url sequence then extract the reel number
 		if ($row->[24] =~ m{(.*/)([^?]*)}m){ 
 			my ($url, $page) = $row->[24] =~ m{(.*/)([^?]*)}m;
 			my $reel = substr $url, 34, 21;
 			return $reel;
+		}elsif ($row->[29] =~ m{(.*/)([^?]*)}m){
+			my ($url, $page) = $row->[29] =~ m{(.*/)([^?]*)}m;
+			my $reel = substr $url, 34, 21;
+			#warn $reel;
+			#die;
+			return $reel;
+		}else{
+			#do nothing
 		}
 	}	
-}
+}	
 sub get_page{
-	my ($reel, $pages) = @_;
+	my ($pages) = @_;
 	my %page_data = ();
+	
 	
 	# Get page number and corresponding rows
 	foreach my $page (@{$pages}){
@@ -104,61 +122,69 @@ sub get_page{
 	return %page_data;
 }
 sub get_properties{
-	my($properties, $page) = @_;
-	
+	my($properties, $pages, $header) = @_;
+	#print Dumper($header);
 	# Eqod columns to Slim properties
-	my %eqod2slim = (
+	my %eqod2prop = (
 		'Author' => 'person',
 		'Place' => 'place',
         'Recipient' => 'person',
         'Name' => 'person',
-        'Place' => 'place',
         'Family Name' => 'person',
         'Year1' => 'date', 	#TODO: eventually will update these dates to represent an ISO range
+        'Month1' => 'date',
+        'Day1' => 'date',
         'Year2' => 'date',
-        'NoteBook' => 'tag', #Notebook is a potentially useful category for developing micro-collections - ways of organizing pages within reels (items)
-        'Content/Comment' => 'tag', #tag is used as a catchall property for eqod, but these are not really tag categories and should be updated in later versions
+        'Month2' => 'date',
+        'Day2' => 'date',
+        'NoteBook' => 'notebook', #Notebook is a potentially useful category for developing micro-collections - ways of organizing pages within reels (items)
+        'Content/Comment' => 'keyword', #tag is used as a catchall property for eqod, but these are not really tag categories and should be updated in later versions
 	);
 	
-	foreach $page(@$page){
-		# Extract properties for each page only if the row contains a valid url sequence (to match to a page)
-		if (@$page[24] =~ m{(.*/)([^?]*)}m){
-		
-			if (@$page[1]){
-				push (@$properties, add_eqod_property("person", @$page[1])); #author
-			}
-			if (@$page[2]){
-				push (@$properties, add_eqod_property("person", @$page[2])); #recipient
-			}
-			if (@$page[3]){
-				push (@$properties, add_eqod_property("person", @$page[3])); #name
-			}
-			if (@$page[4]){	
-				push (@$properties, add_eqod_property("place", @$page[4])); #place
-			}
-			if (@$page[6]){	
-				push (@$properties, add_eqod_property("person", @$page[6])); #family name
-			}
-			
-			if (@$page[8]){ #year1
-				my $date = get_date(@$page[8], @$page[10], @$page[9]);	 #date for year2
-				push (@$properties, add_eqod_property("date", $date));
-			}
-		
-			if (@$page[11]){ #year2
-				my $date = get_date(@$page[11], @$page[13], @$page[12]);	 #date for year2
-				push (@$properties, add_eqod_property("date", $date));
-			}
-
-			if (@$page[22]){
-				#my $notebook = lc(@$page->[22]);	
-				push (@$properties, add_eqod_property("tag", @$page[22])); #notebook
-			}
-			if (@$page[23]){	
-				push (@$properties, add_eqod_property("tag", @$page[23])); #content/comment
-			}	
-		}	
+	#foreach header that matches an eqod property grab corresponding value for each page
+	my %cells = ();
+	foreach my $property(@$header){	
+			my $value;
+			foreach my $page(@$pages){
+				$value = shift(@$page);
+				}
+			next unless ($property);
+			unless ($cells {$property}){
+				$cells {$property} = [];
+			}		
+			push ($cells{$property}, $value);
 	}
+
+	#if the header matches the eqod tag add it to properties   	
+	foreach my $tag(keys(%cells)){
+		if ($tag eq 'Year1' || $tag eq 'Year2'){
+			warn "success! $tag";
+			my $value = shift($cells{$tag});
+			push (@$properties, add_eqod_property($eqod2prop{$tag}, $value));	
+				
+		}elsif ($eqod2prop{$tag}){
+			warn "success! $tag";
+			my $value = shift($cells{$tag});
+			push (@$properties, add_eqod_property($eqod2prop{$tag}, $value));
+			
+		}else{
+			#columns not used
+			warn "Header: $tag is not used";
+		}
+	}
+	
+	#process dates
+	#TODO: this might be removed from script - couch can contain multiple date fields
+			#if (@$page[8]){ #year1
+			#	my $date = get_date(@$page[8], @$page[10], @$page[9]);	 #tag:date for year2
+			#	push (@$properties, add_eqod_property("tag:date", $date));
+			#}
+		
+			#if (@$page[11]){ #year2
+			#	my $date = get_date(@$page[11], @$page[13], @$page[12]);	 #tag:date for year2
+			#	push (@$properties, add_eqod_property("tag:date", $date));
+			#}
+#		}	
 }
 sub get_date{
 	my($y, $m, $d) = @_;
@@ -219,12 +245,12 @@ sub remove_duplicates_array{
 }
 sub json_eqod {
 	my($uuid, $data) = @_;
-		
 	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
+	
 	#say $json;
 	my $db = CouchDB->new('127.0.0.1', '5984');
-	my $attachment = $db->put("externalmeta/$uuid/", $json);
-	say $attachment;
+	my $document = $db->put("externalmeta/$uuid/", $json);
+	say $document;
 	die;
 }
 
