@@ -19,7 +19,7 @@ foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
 	open my $fh, "<:encoding(utf8)", $filename or die "Can't open ".$filename."\n";
 	my $header = $csv->getline ($fh);
-	print join("-", @$header), "\n\n";
+	#print join("-", @$header), "\n\n";
 	process($fh, $csv, $header);	
 }
 exit;
@@ -57,12 +57,12 @@ sub process{
 			#TODO: add if there is a page
 			get_properties ($properties, $page_data{$page}, $header);
 			#print Dumper($properties);
-					
+
 			#combine properties under the same tag
 			foreach my $prop(@$properties){	
 				my $value = $prop->{'value'};
 				my $type = $prop->{'type'};
-				warn $type;
+				#warn $type;
 				
 				unless ($types{$type}){
 						$types{$type} = [];
@@ -123,7 +123,7 @@ sub get_page{
 }
 sub get_properties{
 	my($properties, $pages, $header) = @_;
-	#print Dumper($header);
+
 	# Eqod columns to Slim properties
 	my %eqod2prop = (
 		'Author' => 'person',
@@ -131,14 +131,14 @@ sub get_properties{
         'Recipient' => 'person',
         'Name' => 'person',
         'Family Name' => 'person',
-        'Year1' => 'date', 	#TODO: eventually will update these dates to represent an ISO range
+        'Year1' => 'date', 
         'Month1' => 'date',
         'Day1' => 'date',
         'Year2' => 'date',
         'Month2' => 'date',
         'Day2' => 'date',
         'NoteBook' => 'notebook', #Notebook is a potentially useful category for developing micro-collections - ways of organizing pages within reels (items)
-        'Content/Comment' => 'keyword', #tag is used as a catchall property for eqod, but these are not really tag categories and should be updated in later versions
+        'Content/Comment' => 'description', 
 	);
 	
 	#foreach header that matches an eqod property grab corresponding value for each page
@@ -147,29 +147,29 @@ sub get_properties{
 			my $value;
 			foreach my $page(@$pages){
 				$value = shift(@$page);
-				}
-			next unless ($property);
+				
+			}
+			next unless ($value);
 			unless ($cells {$property}){
 				$cells {$property} = [];
 			}		
 			push ($cells{$property}, $value);
 	}
+	#print Dumper(%cells);
 
 	#if the header matches the eqod tag add it to properties   	
 	foreach my $tag(keys(%cells)){
-		if ($tag eq 'Year1' || $tag eq 'Year2'){
-			warn "success! $tag";
-			my $value = shift($cells{$tag});
-			push (@$properties, add_eqod_property($eqod2prop{$tag}, $value));	
-				
-		}elsif ($eqod2prop{$tag}){
-			warn "success! $tag";
+		#warn $tag;
+		#next;
+		#die;
+		if ($eqod2prop{$tag}){
+		#	warn "success! $tag";
 			my $value = shift($cells{$tag});
 			push (@$properties, add_eqod_property($eqod2prop{$tag}, $value));
 			
 		}else{
 			#columns not used
-			warn "Header: $tag is not used";
+			#warn "Header: $tag is not used";
 		}
 	}
 	
