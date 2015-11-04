@@ -54,15 +54,12 @@ sub process{
 				
 			my $properties = [];
 			my %types = ();
-			#TODO: add if there is a page
 			get_properties ($properties, $page_data{$page}, $header);
-			#print Dumper($properties);
 
 			#combine properties under the same tag
 			foreach my $prop(@$properties){	
 				my $value = $prop->{'value'};
 				my $type = $prop->{'type'};
-				#warn $type;
 				
 				unless ($types{$type}){
 						$types{$type} = [];
@@ -97,8 +94,6 @@ sub get_reel{
 		}elsif ($row->[29] =~ m{(.*/)([^?]*)}m){
 			my ($url, $page) = $row->[29] =~ m{(.*/)([^?]*)}m;
 			my $reel = substr $url, 34, 21;
-			#warn $reel;
-			#die;
 			return $reel;
 		}else{
 			#do nothing
@@ -155,15 +150,11 @@ sub get_properties{
 			}		
 			push ($cells{$property}, $value);
 	}
-	#print Dumper(%cells);
 
 	#if the header matches the eqod tag add it to properties   	
 	foreach my $tag(keys(%cells)){
-		#warn $tag;
-		#next;
-		#die;
+		
 		if ($eqod2prop{$tag}){
-		#	warn "success! $tag";
 			my $value = shift($cells{$tag});
 			push (@$properties, add_eqod_property($eqod2prop{$tag}, $value));
 			
