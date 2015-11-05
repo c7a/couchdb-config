@@ -10,7 +10,7 @@ use warnings;
 use LWP::UserAgent;
 use Getopt::Long;
 use JSON;
-use CARP;
+use Carp;
 
 my $tdrmeta = 'http://mini.office.c7a.ca:5984/tdrmeta';
 my $co_search = 'http://mini.office.c7a.ca:5984/co_search';
@@ -22,7 +22,6 @@ GetOptions(
         'skip=i' => \$skip,
         'limit=i' => \$limit )
     or croak 'Error in command line arguments.';
-
 my $ua = LWP::UserAgent->new(timeout => 8*60);
 
 # GET a list of the latest attachments from tdrmeta
@@ -35,7 +34,8 @@ my $res = $ua->request($req);
 if ($res->is_success) {
 
     my $list = from_json($res->content);
-    foreach my $i ($skip .. $skip + ($limit ? $limit : $list->{total_rows}) - 1) {
+    # XXX: the offsets are most certainly wrong
+    for my $i ($skip - 1 .. $skip + ($limit ? $limit : $list->{total_rows}) - 2) {
 
         my $id = $list->{rows}[$i]->{id};
         my $attachment = $list->{rows}[$i]->{value};

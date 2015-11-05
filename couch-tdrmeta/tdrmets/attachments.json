@@ -1,0 +1,15 @@
+{
+   "_id": "_design/attachments",
+   "_rev": "6-1a10720e1162c2ed8b65a19550b85d88",
+   "language": "javascript",
+   "views": {
+       "revisions": {
+           "map": "function(doc) {\n  if (doc._attachments) {\n    emit(Object.keys(doc._attachments).length, Object.keys(doc._attachments));\n  }\n}",
+           "reduce": "_count"
+       },
+       "latest": {
+           "map": "function(doc) {\n  if (doc._attachments) {\n    emit(Object.keys(doc._attachments).sort().pop().split(/\\D/).slice(0,7), Object.keys(doc._attachments).sort().pop());\n  }\n}",
+           "reduce": "_count"
+       }
+   }
+}

@@ -23,7 +23,6 @@ GetOptions(
         'skip=i' => \$skip,
         'limit=i' => \$limit )
     or croak 'Error in command line arguments.';
-
 my $ua = LWP::UserAgent->new(timeout => 8*60);
 
 # GET a list of the AIP locations from tdrepo
@@ -49,7 +48,7 @@ if ($res->is_success) {
             my $content = from_json($res->content);
             next if ( $content->{publicReplicas} &&
                     ($content->{publicReplicas} ~~ $replicas) );
-
+            #XXX: doesn't preserve _attachments or processed
             my $update = to_json( {
                     _rev => $content->{_rev},
                     updated => DateTime->now->datetime,
@@ -70,4 +69,3 @@ if ($res->is_success) {
 } else {
     print $res->status_line, "\n"; # Error
 }
-
