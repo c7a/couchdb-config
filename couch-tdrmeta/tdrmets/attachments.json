@@ -8,7 +8,7 @@
            "reduce": "_count"
        },
        "latest": {
-           "map": "function(doc) {\n  if (doc._attachments) {\n    emit(Object.keys(doc._attachments).sort().pop().split(/\\D/).slice(0,7), Object.keys(doc._attachments).sort().pop());\n  }\n}",
+           "map": "function(doc) {\n  if (doc._attachments) {\n    emit(Object.keys(doc._attachments).sort().pop().split(/\D/).slice(0,7), Object.keys(doc._attachments).sort().pop());\n  }\n}",
            "reduce": "_count"
        }
    }

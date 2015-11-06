@@ -48,18 +48,16 @@ if ($res->is_success) {
             my $content = from_json($res->content);
             next if ( $content->{publicReplicas} &&
                     ($content->{publicReplicas} ~~ $replicas) );
-            #XXX: doesn't preserve _attachments or processed
-            my $update = to_json( {
-                    _rev => $content->{_rev},
-                    updated => DateTime->now->datetime,
-                    publicReplicas => $replicas } );
+
+            $content->{updated} = DateTime->now->datetime;
+            $content->{publicReplicas} = $replicas;
  
             # PUT the updated document in tdrmeta
             $req = HTTP::Request->new(PUT => $tdrmeta . '/' . $id);
             $req->header('Content-Type' => 'application/json');
-            $req->content($update);
+            $req->content(to_json($content));
             $res = $ua->request($req);
-    
+            
             print $res->status_line, " ", $id, "\n"; # Feedback
  
         } else {
