@@ -15,9 +15,12 @@ use CouchDB;
 use DateTime::Format::Strptime;
 use Data::Dumper;
 
+#my $fh = shift(@ARGV) || die "provide csv file";
+
+
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
-	open my $fh, "<:encoding(utf8)", $filename or die "Can't open ".$filename."\n";
+	open my $fh, "<", $filename or die "Can't open ".$filename."\n";
 	my $header = $csv->getline ($fh);
 	#print join("-", @$header), "\n\n";
 	process($fh, $csv, $header);	
@@ -29,9 +32,10 @@ sub process{
 	my ($fh, $csv, $header) = @_;
 	my %csv_data = ();
 	
+	#parse each row and extract the reel information
 	while (my $row = $csv->getline($fh)){
 		#get reel
-		my $reel = get_reel($row);
+		my $reel = get_reel($row, $header);
 		next unless ($reel);
 		unless ($csv_data {$reel}){	
 			$csv_data {$reel} = [];
@@ -40,18 +44,16 @@ sub process{
 	}
 	
 
-	#get page
 	# Create json document for each reel, containing corresponding pages and tags
 	my %page_data = ();
 	foreach my $reel (keys(%csv_data)){	
 
-		# process each page
+		#get page
 		%page_data = get_page($csv_data{$reel});
 
 		foreach my $page (sort({$a <=> $b} keys(%page_data))){
 
 			#get properties
-				
 			my $properties = [];
 			my %types = ();
 			get_properties ($properties, $page_data{$page}, $header);
@@ -74,31 +76,49 @@ sub process{
 				}
 			}
 			#create json
-			my $dt = DateTime->from_epoch( epoch => time );
+			my $dt = DateTime->from_epoch( epoch => time ); #sets a utc timestamp
 			my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => $dt->datetime(), tag => \%types};
-		    json_eqod ($reel.".".$page."|eqod", $doc);	
+		    json_eqod ($reel.".".$page, $doc);	
 	
 		}
 	}	
 }
 sub get_reel{
-	my($row) = @_;
-
+	my($rows, $header) = @_;
+	
 	# Reel information can only be extracted from the url column (#24)
-	foreach ($row){
-		#if the value matches a url sequence then extract the reel number
-		if ($row->[24] =~ m{(.*/)([^?]*)}m){ 
-			my ($url, $page) = $row->[24] =~ m{(.*/)([^?]*)}m;
+	
+	my %cells;
+	foreach my $property(@$header){	
+			#warn $property;
+			my $value = shift(@$rows);
+			
+			next unless ($value);
+			unless ($cells {$property}){
+				$cells {$property} = [];
+			}		
+			push ($cells{$property}, $value);
+	}
+
+	
+	#if the column matches URL then extract the value
+	foreach my $tag(keys(%cells)){
+		
+		if ($tag eq "URLs" || $tag eq "URL"){
+			my $value = shift($cells{$tag});
+			warn $value;
+			my ($url, $page) = $value =~ m{(.*/)([^?]*)}m;
 			my $reel = substr $url, 34, 21;
-			return $reel;
-		}elsif ($row->[29] =~ m{(.*/)([^?]*)}m){
-			my ($url, $page) = $row->[29] =~ m{(.*/)([^?]*)}m;
-			my $reel = substr $url, 34, 21;
-			return $reel;
+			warn $reel;
+			die;
+			return $reel; 
+			
+						
 		}else{
-			#do nothing
+			#columns not used
+			#warn "Header: $tag is not used";
 		}
-	}	
+	}
 }	
 sub get_page{
 	my ($pages) = @_;
@@ -132,6 +152,7 @@ sub get_properties{
         'Year2' => 'date',
         'Month2' => 'date',
         'Day2' => 'date',
+        'URL' => undef,
         'NoteBook' => 'notebook', #Notebook is a potentially useful category for developing micro-collections - ways of organizing pages within reels (items)
         'Content/Comment' => 'description', 
 	);
@@ -153,7 +174,6 @@ sub get_properties{
 
 	#if the header matches the eqod tag add it to properties   	
 	foreach my $tag(keys(%cells)){
-		
 		if ($eqod2prop{$tag}){
 			my $value = shift($cells{$tag});
 			push (@$properties, add_eqod_property($eqod2prop{$tag}, $value));
@@ -194,7 +214,6 @@ sub get_date{
 	# year values that are regular format: yyyy
 	elsif ($y =~ m{\d\d\d\d}m){
 		$date = $y;
-		#print $date;
 		# if there is a month value create a date with yyyy-mm-dd 								
 		if ($m){ #month2
 			$m = get_month($m);
