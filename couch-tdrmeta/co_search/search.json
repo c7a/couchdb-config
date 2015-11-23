@@ -1,9 +1,0 @@
-{
-   "_id": "_design/search",
-   "_rev": "23-7b232e9979444e2a54a854e7aa66de3d",
-   "fulltext": {
-       "meta": {
-           "index": "function(doc) { var ret = new Document(); if (doc.title) { ret.add(doc.title.join(' '), {'field':'title'}); ret.add(doc.title.join(' ')); } if (doc.subject) { ret.add(doc.subject.join(' '), {'field':'subject'}); ret.add(doc.subject.join(' ')); } if (doc.subject) { ret.add(doc.creator.join(' '), {'field':'creator'}); ret.add(doc.creator.join(' ')); } if (doc.pages) { ret.add(doc.pages.join(' '), {'field':'pages'}); ret.add(doc.pages.join(' ')); } for (var i in doc.language) { ret.add(doc.language[i], {'field':'language'}); } if (doc.date) { ret.add(doc.date[0], {'field':'pubmin', 'type':'date'}); } return ret; }"
-       }
-   }
-}
