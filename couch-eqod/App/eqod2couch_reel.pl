@@ -1,22 +1,15 @@
 #!/usr/bin/perl
-# processes csv and posts to couch db
-
+#json output from eqod csv files
 
 use 5.010;
 use strict;
 use warnings;
 
-use utf8;
-use JSON;
-use Text::CSV;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use CouchDB;
-use DateTime::Format::Strptime;
+use Text::CSV;
+use JSON;
 use Data::Dumper;
-
-#my $fh = shift(@ARGV) || die "provide csv file";
-
 
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
@@ -25,55 +18,48 @@ foreach my $filename (@ARGV){
 	process($fh, $csv, $header);	
 }
 exit;
-			
-		
+
 sub process{
-	my ($fh, $csv, $header) = @_;
-	my %csv_data = ();
+	my($fh, $csv, $header) = @_;
 	
-	#parse each row and extract the reel information
-	while (my $row = $csv->getline($fh)){
-	print Dumper($row);
-		#get reel
-		my $reel = get_reel($row, $header);
-		print Dumper($row);
-		next;
-		die;
+	#extract url column location - use that 
+	
+	# Get reel information and add corresponding pages to each reel
+	my %csv_data = ();
+	while (my $row = $csv->getline($fh)) {
+		my $reel = get_reel($row);
 		next unless ($reel);
 		unless ($csv_data {$reel}){	
 			$csv_data {$reel} = [];
 		}
-		warn $reel;
-		print Dumper($row);
-		push ($csv_data {$reel}, $row);	 	
+		#print Dumper ($row);
+		push ($csv_data {$reel}, $row);	 
+		#print Dumper (%csv_data);
+		#die;
 	}
-	#print Dumper(%csv_data);
-	die;
-
+	
 	# Create json document for each reel, containing corresponding pages and tags
 	my %page_data = ();
 	foreach my $reel (keys(%csv_data)){	
-
-		#get page
-		%page_data = get_page($csv_data{$reel}, $header);
-
+		#json structure
+		
+		# process each page
+		%page_data = get_page($reel, $csv_data{$reel});
 		foreach my $page (sort({$a <=> $b} keys(%page_data))){
-
-			#get properties
 			my $properties = [];
 			my %types = ();
 			get_properties ($properties, $page_data{$page}, $header);
-
+			
 			#combine properties under the same tag
 			foreach my $prop(@$properties){	
 				my $value = $prop->{'value'};
 				my $type = $prop->{'type'};
-				
 				unless ($types{$type}){
-						$types{$type} = [];
+					$types{$type} = [];
 				}
 				push ($types{$type}, $value);
 			} 
+			
 			#remove duplicate values
 			foreach my $tag (keys(%types)){
 				foreach my $value ($types{$tag}){
@@ -81,92 +67,39 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
-			#create json
-			my $dt = DateTime->from_epoch( epoch => time ); #sets a utc timestamp
-			my $doc = {aip => $reel, page => $page, source => 'eqod', approved => "true", date_added => $dt->datetime(), tag => \%types};
-		    json_eqod ($reel.".".$page, $doc);	
-	
+			my $doc = {reel => $reel, page =>$page, tag => \%types};
+			create_json ($reel.".".$page, ({document => {object => $doc}}));	
 		}
 	}	
 }
 sub get_reel{
-	my($rows, $header) = @_;
-
-
+	my($row) = @_;
+	
 	# Reel information can only be extracted from the url column (#24)
-	
-	my %cells;
-	foreach my $property(@$header){	
-			#warn $property;
-			my $value = shift(@$rows);
-			
-			next unless ($value);
-			unless ($cells {$property}){
-				$cells {$property} = [];
-			}		
-			push ($cells{$property}, $value);
-	}
-	
-	#if the column matches URL then extract the value
-	foreach my $tag(keys(%cells)){
-		
-		if ($tag eq "URLs" || $tag eq "URL"){
-			my $value = shift($cells{$tag});
-			warn $value;
-			my ($url, $page) = $value =~ m{(.*/)([^?]*)}m;
+	foreach ($row->[24]){
+		#if the value matches a url sequence then extract the reel number
+		if ($row->[24] =~ m{(.*/)([^?]*)}m){ 
+			my ($url, $page) = $row->[24] =~ m{(.*/)([^?]*)}m;
 			my $reel = substr $url, 34, 21;
-			#warn $reel;
-			#die;
-			return $reel; 
-			
-						
-		}else{
-			#columns not used
-			#warn "Header: $tag is not used";
+			return $reel;
 		}
-	}
-}	
+	}	
+}
 sub get_page{
-	my ($pages, $header) = @_;
-	#print Dumper($pages);
-	#die;
-	#TODO: create function for extracting URL column values
+	my ($reel, $pages) = @_;
 	my %page_data = ();
-	my %cells;
-	foreach my $property(@$header){	
-		#warn $property;
-			my $value = shift(@$pages);
-			
-			next unless ($value);
-			unless ($cells {$property}){
-				$cells {$property} = [];
-			}		
-			push ($cells{$property}, $value);
-	}
-	print Dumper(%cells);
-	die;
 	
 	# Get page number and corresponding rows
-	foreach my $tag(keys(%cells)){
-		
-			if ($tag eq "URLs" || $tag eq "URL"){
-				my $value = shift($cells{$tag});
-				warn $value;
-				my ($url, $page_id) = $value =~ m{(.*/)([^?]*)}m;
-				next unless ($page_id);
-				unless ($page_data {$page_id}){
-					$page_data {$page_id} = [];
-				}		
-				push ($page_data {$page_id}, $tag);
-			}else{
-			#columns not used
-			#warn "Header: $tag is not used";
-		}
-			return %page_data;
-					
+	foreach my $page (@{$pages}){
+		my ($url, $page_id) = @$page[24] =~ m{(.*/)([^?]*)}m; #page number is acquired from url column
+		next unless ($page_id);
+		unless ($page_data {$page_id}){
+			$page_data {$page_id} = [];
+		}		
+		push ($page_data {$page_id}, $page);
 	}
+	return %page_data;
 }
-
 sub get_properties{
 	my($properties, $pages, $header) = @_;
 
@@ -228,8 +161,46 @@ sub get_properties{
 			#}
 #		}	
 }
-
-
+sub get_date{
+	my($y, $m, $d) = @_;
+	my $date;
+	
+	# year values that start with 'circa' or 'after' - these will be handled as a single year
+	if ($y =~ m{^[Cc]irca}m || $y =~ m{^[Aa]fter}m){
+		$date = $y; #tag:date
+	}
+	
+	# year values that contain question marks 
+	elsif ($y =~ m{\?}m){
+		$date = $y; #tag:date			
+	}
+	
+	# year values that are regular format: yyyy
+	elsif ($y =~ m{\d\d\d\d}m){
+		$date = $y;
+		#print $date;
+		# if there is a month value create a date with yyyy-mm-dd 								
+		if ($m){ #month2
+			$m = get_month($m);
+			$date = sprintf("%04d-%02d", $y, $m);	
+		}
+		if ($d){ #month2
+			$date = sprintf("%04d-%02d-%02d", $y, $m, $d);	
+		}
+	}
+	return $date;
+}
+sub get_month{
+	my($month) = @_;
+	
+	#convert month to number
+	my %mon2num = qw(
+	jan 1  feb 2  mar 3  apr 4  may 5  jun 6
+	jul 7  aug 8  sep 9  oct 10 nov 11 dec 12
+	);	
+	my $m = $mon2num{lc substr($month, 0, 3)};	
+	return $m;
+}
 sub add_eqod_property{
 	my($type, $value) = @_;
 				
@@ -247,15 +218,13 @@ sub remove_duplicates_array{
 	my %values = map {$_ => 1} @$value;
 	return \%values;
 }
-sub json_eqod {
+sub create_json {
 	my($uuid, $data) = @_;
-	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
 	
-	#say $json;
-	my $db = CouchDB->new('127.0.0.1', '5984');
-	my $document = $db->put("externalmeta/$uuid/", $json);
-	say $document;
-	die;
+	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
+	say $json;
+	open my $fh, ">", "/Users/julienne/Desktop/json_output_eqod/newtest/$uuid.json";
+	print $fh $json;
+	#print "$json\n";
 }
-
 

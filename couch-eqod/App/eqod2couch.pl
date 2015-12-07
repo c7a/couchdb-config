@@ -12,28 +12,27 @@ use Text::CSV;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use CouchDB;
+use Data::Dumper;
 
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
 	open my $fh, "<:encoding(utf8)", $filename or die "Can't open ".$filename."\n";
-	process($fh, $csv);	
+	my $header = $csv->getline ($fh);
+	process($fh, $csv, $header);	
 }
 exit;
 
 sub process{
-	my($fh, $csv) = @_;
+	my($fh, $csv, $header) = @_;
 	
 	# Get reel information and add corresponding pages to each reel
-	my %csv_data = ();
+	my $csv_data = [];
 	while (my $row = $csv->getline($fh)) {
-		my $reel = get_reel($row);
-		next unless ($reel);
-		unless ($csv_data {$reel}){	
-			$csv_data {$reel} = [];
-		}
-		push ($csv_data {$reel}, $row);	 
+		print Dumper($row);
+		my $reel = get_reel($csv_data, $row, $header);
+		#print Dumper($row);
+		die;
 	}
-	
 	# Create json document for each reel, containing corresponding pages and tags
 	my %page_data = ();
 	foreach my $reel (keys(%csv_data)){	
@@ -70,17 +69,54 @@ sub process{
 	}	
 }
 sub get_reel{
-	my($row) = @_;
+	my($csv_data, $row, $header) = @_;
 	
 	# Reel information can only be extracted from the url column (#24)
-	foreach ($row->[24]){
-		#if the value matches a url sequence then extract the reel number
-		if ($row->[24] =~ m{(.*/)([^?]*)}m){ 
-			my ($url, $page) = $row->[24] =~ m{(.*/)([^?]*)}m;
-			my $reel = substr $url, 34, 21;
-			return $reel;
+	my %cells;
+	print Dumper($row);
+	#next;
+	#die;
+	foreach my $property(@$header){
+		warn $property;
+		my $value = shift(@$row);
+		warn $value;
+		
+		next unless ($value);
+		unless ($cells{$property}){
+			$cells {$property} = [];
 		}
-	}	
+		push ($cells{$property}, $value);		
+	}
+		print Dumper(%cells);
+	
+	foreach my $tag(keys(%cells)){
+		warn $tag;
+		if ($tag eq "URLs" || $tag eq "URL"){
+			my $value = shift ($cells{$tag});
+			my ($url, $page) = $value =~ m{(.*/)([^?]*)}m;
+			my $reel = substr $url, 34, 21;
+			warn $reel;
+			#return $reel;	
+			next unless ($reel);
+			unless ($csv_data {$reel}){	
+				$csv_data {$reel} = [];
+			}
+			push (@$csv_data {$reel}, $row);	 
+		}
+	}
+}
+sub get_csv_data{
+	my($page, $value) = @_;
+				
+	my %csv_data;
+	if ($value){
+		%csv_data = (
+		        type => $page,
+		        tags => $tags
+		    );
+	}
+	return \%csv_data;
+}
 }
 sub get_page{
 	my ($reel, $pages) = @_;
