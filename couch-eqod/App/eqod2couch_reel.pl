@@ -10,6 +10,8 @@ use lib "$FindBin::Bin/../lib";
 use Text::CSV;
 use JSON;
 use Data::Dumper;
+use List::Util qw(first);
+use File::Path qw(make_path);
 
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
@@ -22,20 +24,19 @@ exit;
 sub process{
 	my($fh, $csv, $header) = @_;
 	
-	#extract url column location - use that 
+	#extract url column location
+	my $url_column = get_url($header);
 	
 	# Get reel information and add corresponding pages to each reel
 	my %csv_data = ();
 	while (my $row = $csv->getline($fh)) {
-		my $reel = get_reel($row);
+		my $url = $row->[$url_column];
+		my $reel = get_reel($url);
 		next unless ($reel);
 		unless ($csv_data {$reel}){	
 			$csv_data {$reel} = [];
 		}
-		#print Dumper ($row);
 		push ($csv_data {$reel}, $row);	 
-		#print Dumper (%csv_data);
-		#die;
 	}
 	
 	# Create json document for each reel, containing corresponding pages and tags
@@ -68,19 +69,26 @@ sub process{
 				}
 			}
 			my $doc = {reel => $reel, page =>$page, tag => \%types};
-			create_json ($reel.".".$page, ({document => {object => $doc}}));	
+			create_json ($reel, $reel.".".$page, ({document => {object => $doc}}));	
 		}
 	}	
 }
-sub get_reel{
-	my($row) = @_;
+sub get_url{
+	my($header) = @_;
 	
-	# Reel information can only be extracted from the url column (#24)
-	foreach ($row->[24]){
+	#determine index location of URL column
+	my $url_column = first {@$header[$_] eq 'URL' || @$header[$_] eq 'URLs'}0..@$header;
+	return $url_column;
+}
+sub get_reel{
+	my($url) = @_;
+	
+	# Reel information can only be extracted from the url column
+	foreach ($url){
 		#if the value matches a url sequence then extract the reel number
-		if ($row->[24] =~ m{(.*/)([^?]*)}m){ 
-			my ($url, $page) = $row->[24] =~ m{(.*/)([^?]*)}m;
-			my $reel = substr $url, 34, 21;
+		if ($url =~ m{(.*/)([^?]*)}m){ 
+			my ($uri, $page) = $url =~ m{(.*/)([^?]*)}m;
+			my $reel = substr $uri, 34, 21;
 			return $reel;
 		}
 	}	
@@ -147,60 +155,8 @@ sub get_properties{
 			#warn "Header: $tag is not used";
 		}
 	}
-	
-	#process dates
-	#TODO: this might be removed from script - couch can contain multiple date fields
-			#if (@$page[8]){ #year1
-			#	my $date = get_date(@$page[8], @$page[10], @$page[9]);	 #tag:date for year2
-			#	push (@$properties, add_eqod_property("tag:date", $date));
-			#}
-		
-			#if (@$page[11]){ #year2
-			#	my $date = get_date(@$page[11], @$page[13], @$page[12]);	 #tag:date for year2
-			#	push (@$properties, add_eqod_property("tag:date", $date));
-			#}
-#		}	
 }
-sub get_date{
-	my($y, $m, $d) = @_;
-	my $date;
-	
-	# year values that start with 'circa' or 'after' - these will be handled as a single year
-	if ($y =~ m{^[Cc]irca}m || $y =~ m{^[Aa]fter}m){
-		$date = $y; #tag:date
-	}
-	
-	# year values that contain question marks 
-	elsif ($y =~ m{\?}m){
-		$date = $y; #tag:date			
-	}
-	
-	# year values that are regular format: yyyy
-	elsif ($y =~ m{\d\d\d\d}m){
-		$date = $y;
-		#print $date;
-		# if there is a month value create a date with yyyy-mm-dd 								
-		if ($m){ #month2
-			$m = get_month($m);
-			$date = sprintf("%04d-%02d", $y, $m);	
-		}
-		if ($d){ #month2
-			$date = sprintf("%04d-%02d-%02d", $y, $m, $d);	
-		}
-	}
-	return $date;
-}
-sub get_month{
-	my($month) = @_;
-	
-	#convert month to number
-	my %mon2num = qw(
-	jan 1  feb 2  mar 3  apr 4  may 5  jun 6
-	jul 7  aug 8  sep 9  oct 10 nov 11 dec 12
-	);	
-	my $m = $mon2num{lc substr($month, 0, 3)};	
-	return $m;
-}
+
 sub add_eqod_property{
 	my($type, $value) = @_;
 				
@@ -219,11 +175,15 @@ sub remove_duplicates_array{
 	return \%values;
 }
 sub create_json {
-	my($uuid, $data) = @_;
+	my($reel, $uuid, $data) = @_;
 	
 	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
-	say $json;
-	open my $fh, ">", "/Users/julienne/Desktop/json_output_eqod/newtest/$uuid.json";
+	#say $json;
+	make_path('/Users/julienne/Desktop/eqod2couch/'.$reel, {
+		verbose => 1,
+		mode => 0711,
+	});
+	open my $fh, ">", "/Users/julienne/Desktop/eqod2couch/$reel/$uuid.json";
 	print $fh $json;
 	#print "$json\n";
 }

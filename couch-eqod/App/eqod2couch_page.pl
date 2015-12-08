@@ -229,7 +229,6 @@ sub get_properties{
 #		}	
 }
 
-
 sub add_eqod_property{
 	my($type, $value) = @_;
 				
