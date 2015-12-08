@@ -11,10 +11,11 @@ use Text::CSV;
 use JSON;
 use List::Util qw(first);
 use File::Path qw(make_path);
+use Data::Dumper;
 
 foreach my $filename (@ARGV){
 	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
-	open my $fh, "<", $filename or die "Can't open ".$filename."\n";
+	open my $fh, "<:encoding(UTF-8)", $filename or die "Can't open ".$filename."\n";
 	my $header = $csv->getline ($fh);
 	process($fh, $csv, $header);	
 }
@@ -25,6 +26,7 @@ sub process{
 	
 	#extract url column location
 	my $url_column = get_url($header);
+	warn $url_column;
 	
 	# Get reel information and add corresponding pages to each reel
 	my %csv_data = ();
@@ -44,7 +46,7 @@ sub process{
 		#json structure
 		
 		# process each page
-		%page_data = get_page($reel, $csv_data{$reel});
+		%page_data = get_page($url_column, $reel, $csv_data{$reel});
 		foreach my $page (sort({$a <=> $b} keys(%page_data))){
 			my $properties = [];
 			my %types = ();
@@ -93,12 +95,12 @@ sub get_reel{
 	}	
 }
 sub get_page{
-	my ($reel, $pages) = @_;
+	my ($url_column, $reel, $pages) = @_;
 	my %page_data = ();
 	
 	# Get page number and corresponding rows
 	foreach my $page (@{$pages}){
-		my ($url, $page_id) = @$page[24] =~ m{(.*/)([^?]*)}m; #page number is acquired from url column
+		my ($url, $page_id) = @$page[$url_column] =~ m{(.*/)([^?]*)}m; #page number is acquired from url column
 		next unless ($page_id);
 		unless ($page_data {$page_id}){
 			$page_data {$page_id} = [];
@@ -175,7 +177,7 @@ sub remove_duplicates_array{
 }
 sub create_json {
 	my($reel, $uuid, $data) = @_;
-	
+	warn $reel;
 	#create necessary directories for each reel to organize page json files
 	make_path('/Users/julienne/Desktop/eqod2couch/'.$reel, {
 		verbose => 1,
