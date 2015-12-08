@@ -9,7 +9,6 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Text::CSV;
 use JSON;
-use Data::Dumper;
 use List::Util qw(first);
 use File::Path qw(make_path);
 
@@ -177,14 +176,15 @@ sub remove_duplicates_array{
 sub create_json {
 	my($reel, $uuid, $data) = @_;
 	
-	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
-	#say $json;
+	#create necessary directories for each reel to organize page json files
 	make_path('/Users/julienne/Desktop/eqod2couch/'.$reel, {
 		verbose => 1,
 		mode => 0711,
 	});
+	
+	#output json files in each reel directory for each page
+	my $json = JSON->new->utf8(1)->pretty(1)->encode($data);
 	open my $fh, ">", "/Users/julienne/Desktop/eqod2couch/$reel/$uuid.json";
 	print $fh $json;
-	#print "$json\n";
 }
 
