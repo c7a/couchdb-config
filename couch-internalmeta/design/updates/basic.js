@@ -31,7 +31,7 @@ function(doc, req){
                 if (!repo1 || !repo2 || repo1.length != repo2.length) {
                     return false;
                 }
-                // cheating for now
+                // TODO: cheating for now - treat same if length same
                 return true;
             }
 
@@ -49,9 +49,18 @@ function(doc, req){
             doc['sub-type'] = updatedoc['sub-type'];
             updated=true;
         }
-        if (('approved' in updatedoc) && (doc['approved'] !== updatedoc['approved'])) {
-            doc['approved'] = updatedoc['approved'];
-            updated=true;
+        if ('approved' in updatedoc) {
+            if(updatedoc['approved'] === 'false') {
+                if('approved' in doc) {
+                    delete doc['approved'];
+                    updated=true;
+                }
+            } else {
+                if(!('approved' in doc)) {
+                    doc['approved'] = nowdates;
+                    updated=true;
+                }
+            }
         }
     }
     if (updated) {
