@@ -15,11 +15,16 @@ sub readjs {
     return $jsstring;
 }
 
+my $aiphascmrmap = readjs("design/views/aiphascmr.map.js");
 my $basicupdate = readjs("design/updates/basic.js");
 
 open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
 print FILE <<EOF;
 exports.views = {
+	"aiphascmr": {
+		"map": "${aiphascmrmap}",
+		"reduce": "_count"
+        }
 }
 exports.lists = {
 }
