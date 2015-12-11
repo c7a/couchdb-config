@@ -13,17 +13,17 @@ use List::Util qw(first);
 use File::Path qw(make_path);
 use Data::Dumper;
 
-foreach my $filename (@ARGV){
-	my $csv = Text::CSV->new({binary=>1}) or die "Cannot use CSV: ".Text::CSV->error_diag();
-	open my $fh, "<:encoding(UTF-8)", $filename or die "Can't open ".$filename."\n";
-	my $header = $csv->getline ($fh);
-	process($fh, $csv, $header);	
-}
+process(@ARGV);
 exit;
 
 sub process{
-	my($fh, $csv, $header) = @_;
+	my($file) = @_;
 	
+	warn $file;
+	my $csv = Text::CSV->new({binary=>1});
+	open my $fh, "<:encoding(iso-8859-1)", $file or die "Cannot read $file: $!";
+	my $header = $csv->getline ($fh);
+
 	#extract url column location
 	my $url_column = get_url($header);
 	warn $url_column;
@@ -69,7 +69,16 @@ sub process{
 					$types{$tag} = [keys(%$values)];					
 				}
 			}
+			#warn $page;
 			my $doc = {reel => $reel, page =>$page, tag => \%types};
+			#print Dumper($doc);
+			#warn $reel;
+			#$url =~ m{(.*/)([^?]*)}m)
+			if ($reel =~ m{(.*/)}m){
+				warn $reel;
+				$reel =~ s/\///;
+				warn $reel;
+			}
 			create_json ($reel, $reel.".".$page, ({document => {object => $doc}}));	
 		}
 	}	
@@ -78,7 +87,7 @@ sub get_url{
 	my($header) = @_;
 	
 	#determine index location of URL column
-	my $url_column = first {@$header[$_] eq 'URL' || @$header[$_] eq 'URLs'}0..@$header;
+	my $url_column = first {@$header[$_] eq 'URL' || @$header[$_] eq 'URLs' || @$header[$_] eq 'URL for where document starts'}0..@$header;
 	return $url_column;
 }
 sub get_reel{
@@ -177,7 +186,8 @@ sub remove_duplicates_array{
 }
 sub create_json {
 	my($reel, $uuid, $data) = @_;
-	warn $reel;
+	#print Dumper($data);
+	
 	#create necessary directories for each reel to organize page json files
 	make_path('/Users/julienne/Desktop/eqod2couch/'.$reel, {
 		verbose => 1,
