@@ -79,6 +79,35 @@ function(doc, req){
             doc['attachInfo']=attachinfo;
             updated=true;
         }
+        if ('collectionsadd' in updatedoc) {
+            var col=[];
+            if ('collections' in doc) {
+                col=doc['collections'];
+            }
+
+            var cola = updatedoc['collectionsadd'].split(",");
+            for (var i=0, l=cola.length; i<l; i++)
+                if (col.indexOf(cola[i]) === -1 && cola[i] !== '')
+                        col.push(cola[i]);
+            doc['collections']=col;
+            doc['collectionDate']=nowdates;
+            updated=true;
+        }
+        if ('collectionssub' in updatedoc) {
+            var col=[];
+            if ('collections' in doc) {
+                col=doc['collections'];
+            }
+
+            var cols = updatedoc['collectionssub'].split(",");
+            var colnew = [];
+            for (var i=0, l=col.length; i<l; i++)
+                if (cols.indexOf(col[i]) === -1)
+                    colnew.push(col[i]);
+            doc['collections']=colnew;
+            doc['collectionDate']=nowdates;
+            updated=true;
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;
