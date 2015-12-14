@@ -62,6 +62,23 @@ function(doc, req){
                 }
             }
         }
+        if ('upload' in updatedoc) {
+            var uploadinfo = {};
+            if ('uploadinfo' in updatedoc) {
+                // This parameter sent as JSON encoded string
+                var uploadinfo = JSON.parse(updatedoc['uploadinfo']);
+            }
+            uploadinfo["uploadDate"] = nowdates;
+            
+            var attachinfo = {};
+            if ('attachInfo' in doc) {
+                attachinfo = doc['attachInfo'];
+            }
+            attachinfo[updatedoc['upload']]=uploadinfo;
+
+            doc['attachInfo']=attachinfo;
+            updated=true;
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;
