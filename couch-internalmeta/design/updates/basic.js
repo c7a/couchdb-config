@@ -38,6 +38,8 @@ function(doc, req){
             if (!hasSameMembers(doc['repos'],repos)) {
                 doc['repos'] = repos;
                 doc['type'] = 'aip';
+                // Remove old key -- remove this once database transitioned
+                delete doc['public_repo'];
                 updated=true;
             }
         }
