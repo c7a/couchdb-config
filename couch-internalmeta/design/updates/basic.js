@@ -53,11 +53,11 @@ function(doc, req){
             doc['parent'] = updatedoc['parent'];
             updated=true;
         }
-        if ('pages' in updatedoc) {
+        if ('pageinfo' in updatedoc) {
             // This parameter sent as JSON encoded string
-            var pages = JSON.parse(updatedoc['pages']);
+            var pageinfo = JSON.parse(updatedoc['pageinfo']);
 
-            doc['pages'] = pages;
+            doc['pageinfo'] = pageinfo;
             updated=true;
         }
         if ('approved' in updatedoc) {
