@@ -22,9 +22,9 @@ function(doc, req){
                 return [null, '{"error": "Missing ID"}\n']
             }
         }
-        if ('public_repo' in updatedoc) {
+        if ('repos' in updatedoc) {
             // This parameter sent as JSON encoded string
-            var pubrepo = JSON.parse(updatedoc['public_repo']);
+            var repos = JSON.parse(updatedoc['repos']);
 
             // Equality is same membership, even if different order
             function hasSameMembers(repo1,repo2) {
@@ -35,8 +35,8 @@ function(doc, req){
                 return true;
             }
 
-            if (!hasSameMembers(doc['public_repo'],pubrepo)) {
-                doc['public_repo'] = pubrepo;
+            if (!hasSameMembers(doc['repos'],repos)) {
+                doc['repos'] = repos;
                 doc['type'] = 'aip';
                 updated=true;
             }
@@ -47,6 +47,17 @@ function(doc, req){
         }
         if (('sub-type' in updatedoc) && (doc['sub-type'] !== updatedoc['sub-type'])) {
             doc['sub-type'] = updatedoc['sub-type'];
+            updated=true;
+        }
+        if (('parent' in updatedoc) && (doc['parent'] !== updatedoc['parent'])) {
+            doc['parent'] = updatedoc['parent'];
+            updated=true;
+        }
+        if ('pages' in updatedoc) {
+            // This parameter sent as JSON encoded string
+            var pages = JSON.parse(updatedoc['pages']);
+
+            doc['pages'] = pages;
             updated=true;
         }
         if ('approved' in updatedoc) {
