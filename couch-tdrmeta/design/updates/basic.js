@@ -39,6 +39,14 @@ function(doc, req){
             doc['attachInfo']=attachinfo;
             updated=true;
         }
+        if ('improcess' in updatedoc) {
+            var improcess = JSON.parse(updatedoc['improcess']);
+            if (!('date' in improcess)) {
+                improcess['date'] = nowdates;
+            }
+            doc['imProcess']=improcess;
+            updated=true;
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;

@@ -17,6 +17,7 @@ sub readjs {
 
 my $basicupdate = readjs("design/updates/basic.js");
 my $attachmentsmap = readjs("design/views/attachments.map.js");
+my $improcessmap = readjs("design/views/improcess.map.js");
 
 open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
 print FILE <<EOF;
@@ -24,7 +25,12 @@ exports.views = {
     "attachments": {
         "map": "${attachmentsmap}",
         "reduce": "_count"
-    }
+    },
+    "improcess": {
+        "map": "${improcessmap}",
+        "reduce": "_count"
+    },
+
 }
 exports.lists = {
 }
