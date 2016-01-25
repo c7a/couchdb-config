@@ -8,9 +8,9 @@ function(doc) {
             }
         });
     }
-    if (('imProcess' in doc) 
-        && ('date' in doc.imProcess)
-        && (doc.imProcess.date > recentattach)) {
+    if (('hammer' in doc) 
+        && ('date' in doc.hammer)
+        && (doc.hammer.date > recentattach)) {
         return;
     }
     if (recentattach> "0") emit(recentattach,null);

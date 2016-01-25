@@ -39,12 +39,12 @@ function(doc, req){
             doc['attachInfo']=attachinfo;
             updated=true;
         }
-        if ('improcess' in updatedoc) {
-            var improcess = JSON.parse(updatedoc['improcess']);
-            if (!('date' in improcess)) {
-                improcess['date'] = nowdates;
+        if ('hammer' in updatedoc) {
+            var hammer = JSON.parse(updatedoc['hammer']);
+            if (!('date' in hammer)) {
+                hammer['date'] = nowdates;
             }
-            doc['imProcess']=improcess;
+            doc['hammer']=hammer;
             updated=true;
         }
     }
