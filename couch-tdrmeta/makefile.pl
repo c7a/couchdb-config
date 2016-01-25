@@ -18,6 +18,7 @@ sub readjs {
 my $basicupdate = readjs("design/updates/basic.js");
 my $attachmentsmap = readjs("design/views/attachments.map.js");
 my $hammerqmap = readjs("design/views/hammerq.map.js");
+my $hammersmap = readjs("design/views/hammers.map.js");
 
 open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
 print FILE <<EOF;
@@ -30,7 +31,10 @@ exports.views = {
         "map": "${hammerqmap}",
         "reduce": "_count"
     },
-
+    "hammers": {
+        "map": "${hammersmap}",
+        "reduce": "_count"
+    },
 }
 exports.lists = {
 }
