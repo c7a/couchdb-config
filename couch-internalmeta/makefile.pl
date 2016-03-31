@@ -18,6 +18,8 @@ sub readjs {
 my $aiphascmrmap = readjs("design/views/aiphascmr.map.js");
 my $doctypemap = readjs("design/views/doctype.map.js");
 my $basicupdate = readjs("design/updates/basic.js");
+my $pressqmap = readjs("design/views/pressq.map.js");
+my $presssmap = readjs("design/views/presss.map.js");
 
 open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
 print FILE <<EOF;
@@ -29,7 +31,15 @@ exports.views = {
 	"doctype": {
 		"map": "${doctypemap}",
 		"reduce": "_count"
-        }
+        },
+	"pressq": {
+        "map": "${pressqmap}",
+        "reduce": "_count"
+    },
+    "presss": {
+        "map": "${presssmap}",
+        "reduce": "_count"
+    }
 }
 exports.lists = {
 }
