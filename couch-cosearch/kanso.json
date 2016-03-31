@@ -1,0 +1,10 @@
+{
+    "name": "tdr",
+    "version": "0.0.1",
+    "description": "CouchDB functionality to support CIHM::TDR libraries/tools within cosearch database",
+    "app": "tdr",
+    "dependencies": {
+        "node-couchapp": null
+    }
+}
+
