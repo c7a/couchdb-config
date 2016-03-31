@@ -121,6 +121,15 @@ function(doc, req){
             doc['collectionDate']=nowdates;
             updated=true;
         }
+        if ('press' in updatedoc) {
+            var press = JSON.parse(updatedoc['press']);
+            if (!('date' in press)) {
+                press['date'] = nowdates;
+            }
+            doc['press']=press;
+            updated=true;
+        }
+
     }
     if (updated) {
         doc['updated'] = nowdates;
