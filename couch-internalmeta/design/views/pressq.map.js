@@ -1,6 +1,7 @@
 function(doc) {
 
     // Skip documents not approved
+    // TODO: handle "unapproved" and deleting of old records
     if (!('approved' in doc)) {
         return;
     }
@@ -36,6 +37,22 @@ function(doc) {
             // Skip if cmr.json missing
             return;
         }
+    } else {
+        // Skip if no attachments
+        return;
+    }
+
+    // Collections updated
+    if ('collectionDate' in doc) {
+        uqd(doc.collectionDate);
+    }
+    // Approved updated
+    if ('approved' in doc) {
+        uqd(doc.approved);
+    }
+    // An update was requested
+    if ('updatereq' in doc) {
+        uqd(doc.updatereq);
     }
 
     // If queuedate set then at least one date was newer than the last

@@ -40,6 +40,7 @@ function(doc, req){
                 doc['type'] = 'aip';
                 // Remove old key -- remove this once database transitioned
                 delete doc['public_repo'];
+                doc['reposDate']=nowdates;
                 updated=true;
             }
         }
@@ -66,10 +67,12 @@ function(doc, req){
             if(updatedoc['approved'] === 'false') {
                 if('approved' in doc) {
                     delete doc['approved'];
+                    doc['unapproved'] = nowdates;
                     updated=true;
                 }
             } else {
                 if(!('approved' in doc)) {
+                    delete doc['unapproved'];
                     doc['approved'] = nowdates;
                     updated=true;
                 }
@@ -129,7 +132,10 @@ function(doc, req){
             doc['press']=press;
             updated=true;
         }
-
+        if ('update' in updatedoc) {
+            doc['updatereq'] = nowdates;
+            updated=true;
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;
