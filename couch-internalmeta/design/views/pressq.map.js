@@ -31,10 +31,10 @@ function(doc) {
 
     // Look in attachments for updates
     if ('attachInfo' in doc) {
-        if ('cmr.json' in doc.attachInfo) {
-            uqd(doc.attachInfo["cmr.json"].uploadDate);
+        if ('hammer.json' in doc.attachInfo) {
+            uqd(doc.attachInfo["hammer.json"].uploadDate);
         } else {
-            // Skip if cmr.json missing
+            // Skip if hammer.json missing
             return;
         }
     } else {
