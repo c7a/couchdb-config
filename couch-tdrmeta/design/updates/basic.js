@@ -47,6 +47,10 @@ function(doc, req){
             doc['hammer']=hammer;
             updated=true;
         }
+        if ('update' in updatedoc) {
+            doc['updatereq'] = nowdates;
+            updated=true;
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;
