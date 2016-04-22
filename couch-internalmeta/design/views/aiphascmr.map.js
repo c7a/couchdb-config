@@ -3,7 +3,7 @@ function(doc) {
         && (!doc['sub-type'] || doc['sub-type'] !== 'deleted')) {
         
         var present;
-        if (doc._attachments && doc._attachments['cmr.xml']) {
+        if (doc._attachments && (doc._attachments['cmr.xml'] || doc._attachments['cmr.json']) ) {
             present=1;
         } else {
             present=0;
