@@ -136,6 +136,17 @@ function(doc, req){
             doc['updatereq'] = nowdates;
             updated=true;
         }
+        if (('label' in updatedoc) && (doc['label']!== updatedoc['label'])) {
+            doc['label'] = updatedoc['label'];
+            updated=true;
+        }
+        if ('hammerfields' in updatedoc) {
+            // This parameter sent as JSON encoded string
+            var hammerfields = JSON.parse(updatedoc['hammerfields']);
+
+            doc['hammerfields'] = hammerfields;
+            updated=true;
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;
