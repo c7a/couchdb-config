@@ -9,7 +9,7 @@ function(doc) {
         });
     }
     if ('updatereq' in doc) {
-        if (doc.updatereq > recentupdate) {
+        if (recentupdate > "0" && doc.updatereq > recentupdate) {
             recentupdate=doc.updatereq;
         }
     }
