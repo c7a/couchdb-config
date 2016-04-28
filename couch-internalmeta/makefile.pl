@@ -20,6 +20,7 @@ my $doctypemap = readjs("design/views/doctype.map.js");
 my $basicupdate = readjs("design/updates/basic.js");
 my $pressqmap = readjs("design/views/pressq.map.js");
 my $presssmap = readjs("design/views/presss.map.js");
+my $issuesmap = readjs("design/views/issues.map.js");
 
 open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
 print FILE <<EOF;
@@ -38,6 +39,10 @@ exports.views = {
     },
     "presss": {
         "map": "${presssmap}",
+        "reduce": "_count"
+    },
+    "issues": {
+        "map": "${issuesmap}",
         "reduce": "_count"
     }
 }
