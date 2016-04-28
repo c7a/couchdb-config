@@ -21,6 +21,7 @@ my $basicupdate = readjs("design/updates/basic.js");
 my $pressqmap = readjs("design/views/pressq.map.js");
 my $presssmap = readjs("design/views/presss.map.js");
 my $issuesmap = readjs("design/views/issues.map.js");
+my $haspubminmap = readjs("design/views/haspubmin.map.js");
 
 open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
 print FILE <<EOF;
@@ -43,6 +44,10 @@ exports.views = {
     },
     "issues": {
         "map": "${issuesmap}",
+        "reduce": "_count"
+    },
+    "haspubmin": {
+        "map": "${haspubminmap}",
         "reduce": "_count"
     }
 }
