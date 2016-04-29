@@ -144,6 +144,10 @@ function(doc, req){
             doc['pubmin'] = updatedoc['pubmin'];
             updated=true;
         }
+        if (('seq' in updatedoc) && (doc['seq']!== updatedoc['seq'])) {
+            doc['seq'] = updatedoc['seq'];
+            updated=true;
+        }
         if ('hammerfields' in updatedoc) {
             // This parameter sent as JSON encoded string
             var hammerfields = JSON.parse(updatedoc['hammerfields']);
