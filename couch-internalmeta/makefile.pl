@@ -18,6 +18,7 @@ sub readjs {
 my $aiphascmrmap = readjs("design/views/aiphascmr.map.js");
 my $doctypemap = readjs("design/views/doctype.map.js");
 my $basicupdate = readjs("design/updates/basic.js");
+my $parentupdate = readjs("design/updates/parent.js");
 my $pressqmap = readjs("design/views/pressq.map.js");
 my $presssmap = readjs("design/views/presss.map.js");
 my $issuesmap = readjs("design/views/issues.map.js");
@@ -54,7 +55,8 @@ exports.views = {
 exports.lists = {
 }
 exports.updates = {
-     "basic": "${basicupdate}"
+     "basic": "${basicupdate}",
+     "parent": "${parentupdate}"
 }
 
 EOF
