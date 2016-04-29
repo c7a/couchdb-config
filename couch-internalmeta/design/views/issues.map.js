@@ -4,6 +4,12 @@ function(doc) {
     if (!('parent' in doc)) {
         return;
     }
-
-    emit(doc.parent, { label: doc['label'] , pubmin: doc['pubmin'] } );
+    var seq=0;
+    if ('seq' in doc) {
+        seq=parseInt(doc.seq);
+    }
+    if (seq<=9999) {
+        seq = ("000"+seq).slice(-4);
+    }
+    emit([doc.parent,seq], { label: doc['label'] , pubmin: doc['pubmin'] } );
 }
