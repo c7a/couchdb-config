@@ -10,9 +10,14 @@ function(doc, req){
     doc['updatereq'] = nowdates;
     doc['updated'] = nowdates;
 
-    var thisreturn = {
-        "label": doc["label"],
-        "return": "updated"
+    var resp = {
+        'headers' : {
+            'Content-Type' : 'application/json'
+        },
+        'body' : toJSON({
+            "label": doc["label"],
+            "return": "updated"
+        })
     }
-    return [doc, JSON.stringify(thisreturn)];
+    return [doc, resp];
 }
