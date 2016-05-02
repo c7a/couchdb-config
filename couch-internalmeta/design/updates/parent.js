@@ -16,6 +16,7 @@ function(doc, req){
         },
         'body' : toJSON({
             "label": doc["label"],
+            "collection": doc["collections"],
             "return": "updated"
         })
     }
