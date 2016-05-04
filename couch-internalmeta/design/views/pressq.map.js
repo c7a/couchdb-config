@@ -1,14 +1,11 @@
 function(doc) {
 
-    // Skip documents not approved
-    // TODO: handle "unapproved" and deleting of old records
-    if (!('approved' in doc)) {
-        return;
-    }
+    // Flag to set if Press should output or delete documents
+    var pressme = true;
 
-    // Skip if AIP has been copied to less than 4 repositories
+    // Delete if AIP has been copied to less than 4 repositories
     if (!('repos' in doc) || doc.repos.length < 4) {
-        return;
+        pressme = false;
     }
 
     // Grab the date Press last ran (if at all)
@@ -34,12 +31,12 @@ function(doc) {
         if ('hammer.json' in doc.attachInfo) {
             uqd(doc.attachInfo["hammer.json"].uploadDate);
         } else {
-            // Skip if hammer.json missing
-            return;
+            // Delete if hammer.json missing
+            pressme = false;
         }
     } else {
-        // Skip if no attachments
-        return;
+        // Delete if no attachments
+        pressme = false;
     }
 
     // Collections updated
@@ -49,7 +46,18 @@ function(doc) {
     // Approved updated
     if ('approved' in doc) {
         uqd(doc.approved);
+    } else {
+        // Delete if not approved
+        pressme = false;
     }
+
+    // Unaproved updated
+    if ('unapproved' in doc) {
+        uqd(doc.unapproved);
+        // Delete if unapproved
+        pressme = false;
+    }
+
     // An update was requested
     if ('updatereq' in doc) {
         uqd(doc.updatereq);
@@ -57,5 +65,5 @@ function(doc) {
 
     // If queuedate set then at least one date was newer than the last
     // time Press ran
-    if (queuedate != undefined) emit(queuedate);
+    if (queuedate != undefined) emit(queuedate,pressme);
 }
