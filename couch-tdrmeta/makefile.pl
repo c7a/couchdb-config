@@ -16,6 +16,7 @@ sub readjs {
 }
 
 my $basicupdate = readjs("design/updates/basic.js");
+my $dittoupdate = readjs("design/updates/ditto.js");
 my $attachmentsmap = readjs("design/views/attachments.map.js");
 my $hammerqmap = readjs("design/views/hammerq.map.js");
 my $hammersmap = readjs("design/views/hammers.map.js");
@@ -39,7 +40,8 @@ exports.views = {
 exports.lists = {
 }
 exports.updates = {
-     "basic": "${basicupdate}"
+     "basic": "${basicupdate}",
+     "ditto": "${dittoupdate}"
 }
 
 EOF
