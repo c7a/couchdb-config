@@ -1,78 +1,117 @@
 #!/usr/bin/env perl
 use strict;
-use Carp;
 use warnings;
-use Config::General;
+use Carp;
+
+use lib "/opt/c7a-perl/current/cmd/local/lib/perl5";
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
+use Getopt::Long;
+use JSON;
+use CIHM::TDR::TDRConfig;
+use CIHM::TDR::REST::internalmeta;
+
+##
+## Modify this structure as new parts of design document authored.
+##
+my $design= {
+    filters => {},
+    lists => {},
+    shows => {},
+    updates => {
+        basic => readjs("$FindBin::RealBin/design/updates/basic.js"),
+        parent => readjs("$FindBin::RealBin/design/updates/parent.js"),
+    },
+    views => {
+        aiphascmr => {
+                map => readjs("$FindBin::RealBin/design/views/aiphascmr.map.js"),
+                reduce => "_count",
+        },
+        doctype => {
+            map => readjs("$FindBin::RealBin/design/views/doctype.map.js"),
+            reduce => "_count",
+        },
+        pressq => {
+            map => readjs("$FindBin::RealBin/design/views/pressq.map.js"),
+            reduce => "_count",
+        },
+        presss => {
+            map => readjs("$FindBin::RealBin/design/views/presss.map.js"),
+            reduce => "_count",
+        },
+        issues => {
+            map => readjs("$FindBin::RealBin/design/views/issues.map.js"),
+            reduce => "_count",
+        },
+        haspubmin => {
+            map => readjs("$FindBin::RealBin/design/views/haspubmin.map.js"),
+            reduce => "_count",
+        }
+    }
+};
+
+## Everything else should just work without being fiddled with.
+
+my $conf = "/etc/canadiana/tdr/tdr.conf";
+my $post;
+
+GetOptions (
+    'conf:s' => \$conf,
+    'post' => \$post,
+    );
+
+my $config = CIHM::TDR::TDRConfig->instance($conf);
+croak "Can't parse $conf\n" if (!$config);
+
+my %confighash = %{$config->get_conf};
+
+my $internalmeta;
+# Undefined if no <internalmeta> config block
+if (exists $confighash{internalmeta}) {
+    $internalmeta = new CIHM::TDR::REST::internalmeta (
+        server => $confighash{internalmeta}{server},
+        database => $confighash{internalmeta}{database},
+        type   => 'application/json',
+        conf   => $conf,
+        clientattrs => {timeout => 3600}
+        );
+} else {
+    croak "Missing <internalmeta> configuration block in config\n";
+}
+
+
+
+if($post) {
+    my $revision;
+    my $designdoc = "_design/tdr";
+    $design->{"_id"}=$designdoc;
+
+    my $res = $internalmeta->head("/".$internalmeta->database."/$designdoc",
+                                    {},{deserializer => 'application/json'});
+    if ($res->code == 200) {
+        $revision=$res->response->header("etag");
+        $revision =~ s/^\"|\"$//g;
+        $design->{'_rev'} = $revision;
+    }
+    elsif ($res->code != 404) {
+        croak "HEAD of $designdoc return code: ".$res->code."\n"; 
+    }
+    $res = $internalmeta->put("/".$internalmeta->database."/$designdoc",
+                                $design, {deserializer => 'application/json'});
+    if ($res->code != 201) {
+        croak "PUT of $designdoc return code: ".$res->code."\n"; 
+}
+} else {
+    print "with --post would post:\n" .
+        to_json( $design, { ascii => 1, pretty => 1 } ) . "\n";
+}
+
 
 sub readjs {
     my $filename = shift(@_);
     open FILE, $filename or die "Couldn't open $filename: $!"; 
     my $jsstring = join("", <FILE>); 
     close FILE;
-    $jsstring =~ s/[\\]/\\\\/g;
-    $jsstring =~ s/[\n]/\\n/g;
-    $jsstring =~ s/[\"]/\\"/g;
     return $jsstring;
-}
-
-my $aiphascmrmap = readjs("design/views/aiphascmr.map.js");
-my $doctypemap = readjs("design/views/doctype.map.js");
-my $basicupdate = readjs("design/updates/basic.js");
-my $parentupdate = readjs("design/updates/parent.js");
-my $pressqmap = readjs("design/views/pressq.map.js");
-my $presssmap = readjs("design/views/presss.map.js");
-my $issuesmap = readjs("design/views/issues.map.js");
-my $haspubminmap = readjs("design/views/haspubmin.map.js");
-
-open FILE, ">tdr.js" or die "Couldn't open tdr.js: $!";
-print FILE <<EOF;
-exports.views = {
-	"aiphascmr": {
-		"map": "${aiphascmrmap}",
-		"reduce": "_count"
-        },
-	"doctype": {
-		"map": "${doctypemap}",
-		"reduce": "_count"
-        },
-	"pressq": {
-        "map": "${pressqmap}",
-        "reduce": "_count"
-    },
-    "presss": {
-        "map": "${presssmap}",
-        "reduce": "_count"
-    },
-    "issues": {
-        "map": "${issuesmap}",
-        "reduce": "_count"
-    },
-    "haspubmin": {
-        "map": "${haspubminmap}",
-        "reduce": "_count"
-    }
-}
-exports.lists = {
-}
-exports.updates = {
-     "basic": "${basicupdate}",
-     "parent": "${parentupdate}"
-}
-
-EOF
-close FILE;
-
-my $arg = shift;
-if ($arg && $arg eq "kanso") {
-    my $conf = new Config::General (
-        -ConfigFile => "/etc/canadiana/tdr/tdr.conf"
-        );
-    my %confighash = $conf->getall;
-    if (exists $confighash{internalmeta}) {
-        my $dburl = $confighash{internalmeta}{server}."/".$confighash{internalmeta}{database}."/";
-        print "Pushing to $dburl\n";
-        `/usr/bin/kanso push $dburl`;
-    } else {
-        croak "Missing <internalmeta> configuration block in config\n";
-    }
 }
