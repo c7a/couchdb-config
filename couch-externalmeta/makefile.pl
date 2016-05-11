@@ -87,8 +87,5 @@ sub readjs {
     open FILE, $filename or die "Couldn't open $filename: $!"; 
     my $jsstring = join("", <FILE>); 
     close FILE;
-    $jsstring =~ s/[\\]/\\\\/g;
-    $jsstring =~ s/[\n]/\\n/g;
-    $jsstring =~ s/[\"]/\\"/g;
     return $jsstring;
 }
