@@ -19,8 +19,13 @@ function(doc, req){
                 }
             } else {
                 // change nothing in database
-                return [null, '{"error": "Missing ID"}\n']
+                return [null, '{"return": "Missing ID"}\n']
             }
+        }
+        // Field must exist
+        if (!('attachInfo' in doc)) {
+            doc['attachInfo'] = {};
+            updated=true;
         }
         if ('manifestdate' in updatedoc) {
             if (doc['manifestdate'] === updatedoc['manifestdate']) {
@@ -29,9 +34,39 @@ function(doc, req){
         }
         if ('attachInfo' in updatedoc) {
             var attachInfo = JSON.parse(updatedoc['attachInfo']);
-            doc['attachInfo']=attachInfo;
-            doc['manifestdate']=updatedoc['manifestdate'];
-            updated=true;
+            var missing = [];
+            attachInfo.forEach(function(attach) {
+                var amatch=false;
+                Object.keys(doc.attachInfo).some(function(infokey) {
+                    if (attach.md5 === doc.attachInfo[infokey].md5) {
+                        amatch=true;
+                        if (attach.path !== doc.attachInfo[infokey].path) {
+                            doc.attachInfo[infokey].path=attach.path;
+                            updated=true;
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+                if (!amatch) {
+                    missing.push(attach.path);
+                }
+            });
+            if (missing.length > 0) {
+                var myreturn= {
+                    "return": "attach missing",
+                    "missing": missing
+                }
+                if (updated) {
+                    doc['updated'] = nowdates;
+                    return [doc, JSON.stringify(myreturn)];
+                } else {
+                    return [null, JSON.stringify(myreturn)];
+                }
+            } else {
+                doc['manifestdate']=updatedoc['manifestdate'];
+                return [doc, '{"return": "attach match"}\n'];
+            }
         }
         
     }
