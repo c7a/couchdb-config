@@ -1,10 +1,25 @@
 function(doc) {
     var recentupdate = "0";
+    var hammermd5;
 
-    if ('_attachments' in doc) {
-        Object.keys(doc._attachments).forEach(function(name) {
-            if (name > recentupdate) {
-                recentupdate=name;
+    if ('attachInfo' in doc) {
+        Object.keys(doc.attachInfo).forEach(function(md5) {
+            var attach=doc.attachInfo[md5];
+            if ('pathDate' in attach) {
+                if (attach.pathDate > recentupdate) {
+                    recentupdate=attach.pathDate;
+                    hammermd5=md5;
+                }
+            } else if ('fileDate' in attach) {
+                if (attach.fileDate > recentupdate) {
+                    recentupdate=attach.fileDate;
+                    hammermd5=md5;
+                }
+            } else if ('uploadDate' in attach) {
+                if (attach.fileDate > recentupdate) {
+                    recentupdate=attach.uploadDate;
+                    hammermd5=md5;
+                }
             }
         });
     }
@@ -19,5 +34,5 @@ function(doc) {
         && (doc.hammer.date > recentupdate)) {
         return;
     }
-    if (recentupdate> "0") emit(recentupdate,null);
+    if (recentupdate> "0") emit(recentupdate,hammermd5);
 }
