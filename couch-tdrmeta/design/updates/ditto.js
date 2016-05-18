@@ -1,4 +1,26 @@
 function(doc, req){
+
+    function arrayeq (array1,array2) {
+        // If same array, or both null, then equal
+        if (array1 === array2)
+            return true;
+
+        // if eithor array is a falsy value, return
+        if (!array1 || !array2)
+            return false;
+
+        // compare lengths - can save a lot of time
+        if (array1.length != array2.length)
+            return false;
+
+        for (var i = 0, l=array1.length; i < l; i++) {
+            if (array1[i] != array2[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     var nowdate = new Date();
     // Javascript toISOString() includes parts of a second, which we strip.
     var nowdates = nowdate.toISOString().replace(/\..*Z/,"Z");
@@ -27,29 +49,37 @@ function(doc, req){
             doc['attachInfo'] = {};
             updated=true;
         }
-        if ('manifestdate' in updatedoc) {
-            if (doc['manifestdate'] === updatedoc['manifestdate']) {
-                return [null, '{"return": "date match"}'];
+
+        // Cleanup
+        Object.keys(doc.attachInfo).forEach(function(md5) {
+            if (!(md5 in doc['_attachments'])) {
+                delete doc.attachInfo[md5];
+                updated=true;
             }
-        }
+        });
+        
         if ('attachInfo' in updatedoc) {
             var attachInfo = JSON.parse(updatedoc['attachInfo']);
             var missing = [];
-            attachInfo.forEach(function(attach) {
-                var amatch=false;
-                Object.keys(doc.attachInfo).some(function(infokey) {
-                    if (attach.md5 === doc.attachInfo[infokey].md5) {
-                        amatch=true;
-                        if (attach.path !== doc.attachInfo[infokey].path) {
-                            doc.attachInfo[infokey].path=attach.path;
+            var askedmd5 = {};
+            Object.keys(attachInfo).forEach(function(md5) {
+                var attach = attachInfo[md5];
+                if (md5 in doc['_attachments']) {
+                    if (md5 in doc.attachInfo) {
+                        if(attach.pathDate !== doc.attachInfo[md5].pathDate) {
+                            doc.attachInfo[md5].pathDate=attach.pathDate;
                             updated=true;
                         }
-                        return true;
+                        if(!arrayeq(attach.paths,doc.attachInfo[md5].paths)) {
+                            doc.attachInfo[md5].paths=attach.paths;
+                            updated=true;
+                        }
+                    } else {
+                        doc.attachInfo[md5]=attach;
+                        updated = true;
                     }
-                    return false;
-                });
-                if (!amatch) {
-                    missing.push(attach.path);
+                } else if (!(md5 in askedmd5)) {
+                    missing.push(attach['paths'].pop());
                 }
             });
             if (missing.length > 0) {
@@ -67,8 +97,11 @@ function(doc, req){
                 doc['manifestdate']=updatedoc['manifestdate'];
                 return [doc, '{"return": "attach match"}\n'];
             }
-        }
-        
+        } else if ('manifestdate' in updatedoc) {
+            if (doc['manifestdate'] === updatedoc['manifestdate']) {
+                return [null, '{"return": "date match"}'];
+            }
+        }        
     }
     if (updated) {
         doc['updated'] = nowdates;
