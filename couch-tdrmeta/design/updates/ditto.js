@@ -52,7 +52,7 @@ function(doc, req){
 
         // Cleanup
         Object.keys(doc.attachInfo).forEach(function(md5) {
-            if (!(md5 in doc['_attachments'])) {
+            if ('_attachments' in doc && !(md5 in doc['_attachments'])) {
                 delete doc.attachInfo[md5];
                 updated=true;
             }
@@ -64,7 +64,7 @@ function(doc, req){
             var askedmd5 = {};
             Object.keys(attachInfo).forEach(function(md5) {
                 var attach = attachInfo[md5];
-                if (md5 in doc['_attachments']) {
+                if ('_attachments' in doc && md5 in doc['_attachments']) {
                     if (md5 in doc.attachInfo) {
                         if(attach.pathDate !== doc.attachInfo[md5].pathDate) {
                             doc.attachInfo[md5].pathDate=attach.pathDate;
