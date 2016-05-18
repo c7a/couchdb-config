@@ -28,6 +28,10 @@ my $design= {
                 map => readjs("$FindBin::RealBin/design/views/attachments.map.js"),
                 reduce => "_count",
         },
+        dupmd5 => {
+                map => readjs("$FindBin::RealBin/design/views/dupmd5.map.js"),
+                reduce => "_count",
+        },
         hammerq => {
             map => readjs("$FindBin::RealBin/design/views/hammerq.map.js"),
             reduce => "_count",
