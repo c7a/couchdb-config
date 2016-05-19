@@ -1,5 +1,10 @@
 function(doc, req){
 
+    var nowdate = new Date();
+    // Javascript toISOString() includes parts of a second, which we strip.
+    var nowdates = nowdate.toISOString().replace(/\..*Z/,"Z");
+    var updated=false;
+
     function arrayeq (array1,array2) {
         // If same array, or both null, then equal
         if (array1 === array2)
@@ -21,10 +26,6 @@ function(doc, req){
         return true;
     }
 
-    var nowdate = new Date();
-    // Javascript toISOString() includes parts of a second, which we strip.
-    var nowdates = nowdate.toISOString().replace(/\..*Z/,"Z");
-    var updated=false;
     if ('form' in req) {
         var updatedoc = req.form;
 
@@ -82,6 +83,32 @@ function(doc, req){
                     missing.push(attach['paths'].pop());
                 }
             });
+            var recentdate = "0";
+            var recentmd5;
+            Object.keys(doc.attachInfo).forEach(function(md5) {
+                var attach=doc.attachInfo[md5];
+                if ('pathDate' in attach) {
+                    if (attach.pathDate > recentdate) {
+                        recentdate=attach.pathDate;
+                        recentmd5=md5;
+                    }
+                } else if ('fileDate' in attach) {
+                    if (attach.fileDate > recentdate) {
+                        recentdate=attach.fileDate;
+                        recentmd5=md5;
+                    }
+                } else if ('uploadDate' in attach) {
+                    if (attach.fileDate > recentdate) {
+                        recentdate=attach.uploadDate;
+                        recentmd5=md5;
+                    }
+                }
+            });
+            if (recentdate > "0" && (!('recentattach' in doc) ||
+                                     doc.recentattach.date != recentdate)) {
+                doc.recentattach = {date:recentdate, md5:recentmd5};
+                updated=true;
+            }
             if (missing.length > 0) {
                 var myreturn= {
                     "return": "attach missing",
@@ -94,8 +121,17 @@ function(doc, req){
                     return [null, JSON.stringify(myreturn)];
                 }
             } else {
-                doc['manifestdate']=updatedoc['manifestdate'];
-                return [doc, '{"return": "attach match"}\n'];
+                if (!('manifestdate' in doc) || 
+                    doc['manifestdate'] !== updatedoc['manifestdate']) {
+                    doc['manifestdate']=updatedoc['manifestdate'];
+                    updated=true;
+                }
+                if (updated) {
+                    doc['updated'] = nowdates;
+                    return [doc, '{"return": "attach match"}\n'];
+                } else {
+                    return [null, '{"return": "attach match"}\n'];
+                }
             }
         } else if ('manifestdate' in updatedoc) {
             if (doc['manifestdate'] === updatedoc['manifestdate']) {
