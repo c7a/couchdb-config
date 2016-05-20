@@ -104,10 +104,18 @@ function(doc, req){
                     }
                 }
             });
-            if (recentdate > "0" && (!('recentattach' in doc) ||
-                                     doc.recentattach.date != recentdate)) {
-                doc.recentattach = {date:recentdate, md5:recentmd5};
-                updated=true;
+            if (recentdate > "0") {
+                if (!('recentattach' in doc) ||
+                    doc.recentattach.date != recentdate ||
+                    doc.recentattach.md5 != recentmd5) {
+                    doc.recentattach = {date:recentdate, md5:recentmd5};
+                    updated=true;
+                }
+            } else {
+                if ('recentattach' in doc) {
+                    delete doc['recentattach'];
+                    updated=true;
+                }
             }
             if (missing.length > 0) {
                 var myreturn= {
