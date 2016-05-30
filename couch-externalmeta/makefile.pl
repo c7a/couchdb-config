@@ -22,7 +22,16 @@ my $design= {
     updates => {
         basic => readjs("$FindBin::RealBin/design/updates/basic.js"),
     },
-    views => {}
+    views => {
+    	dochasattachment =>{
+    		map => readjs("$FindBin::RealBin/design/views/dochasattachment.map.js"),
+    		reduce => "_count",
+    	},
+    	attachmentinfo => {
+    		map => readjs("$FindBin::RealBin/design/views/attachmentinfo.map.js"),
+            reduce => "_count",
+    	}
+    }
 };
 
 ## Everything else should just work without being fiddled with.
