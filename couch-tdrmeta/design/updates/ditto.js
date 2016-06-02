@@ -93,7 +93,7 @@ function(doc, req){
                         recentmd5=md5;
                     }
                 } else if ('fileDate' in attach) {
-                    if (attach.fileDate > recentdate) {
+                    if (attach.fileDate >= recentdate) {
                         recentdate=attach.fileDate;
                         recentmd5=md5;
                     }
