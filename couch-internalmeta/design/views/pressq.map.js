@@ -29,7 +29,12 @@ function(doc) {
     // Look in attachments for updates
     if ('attachInfo' in doc) {
         if ('hammer.json' in doc.attachInfo) {
-            uqd(doc.attachInfo["hammer.json"].uploadDate);
+            // If any of the attachment dates are newer
+            Object.keys(doc.attachInfo).forEach(function(file) {
+                if ('uploadDate' in doc.attachInfo[file]) {
+                    uqd(doc.attachInfo[file].uploadDate);
+                }
+            });
         } else {
             // Delete if hammer.json missing
             pressme = false;
