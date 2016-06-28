@@ -43,6 +43,9 @@ my $design= {
         missingra => {
             map => readjs("$FindBin::RealBin/design/views/missingra.map.js"),
             reduce => "_count",
+        },
+        updated => {
+            map => readjs("$FindBin::RealBin/design/views/updated.map.js"),
         }
     }
 };
