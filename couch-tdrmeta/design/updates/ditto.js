@@ -87,15 +87,13 @@ function(doc, req){
             var recentmd5;
             Object.keys(doc.attachInfo).forEach(function(md5) {
                 var attach=doc.attachInfo[md5];
-                if ('pathDate' in attach) {
-                    if (attach.pathDate > recentdate) {
-                        recentdate=attach.pathDate;
-                        recentmd5=md5;
-                    }
-                } else if ('fileDate' in attach) {
-                    if (attach.fileDate >= recentdate) {
-                        recentdate=attach.fileDate;
-                        recentmd5=md5;
+                if ('fileDate' in attach && 'paths' in attach) {
+                    for (var i = 0, l=attach.paths.length; i < l; i++) {
+                        if (attach.paths[i].indexOf('data/sip/data') == 0 &&
+                            attach.fileDate >= recentdate) {
+                            recentdate=attach.fileDate;
+                            recentmd5=md5;
+                        }
                     }
                 } else if ('uploadDate' in attach) {
                     if (attach.uploadDate > recentdate) {
@@ -129,8 +127,9 @@ function(doc, req){
                     return [null, JSON.stringify(myreturn)];
                 }
             } else {
-                if (!('manifestdate' in doc) || 
-                    doc['manifestdate'] !== updatedoc['manifestdate']) {
+                if ('manifestdate' in updatedoc &&
+                    (!('manifestdate' in doc) || 
+                     doc['manifestdate'] !== updatedoc['manifestdate'])) {
                     doc['manifestdate']=updatedoc['manifestdate'];
                     updated=true;
                 }
