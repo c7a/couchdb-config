@@ -22,7 +22,12 @@ my $design= {
     updates => {
         basic => readjs("$FindBin::RealBin/design/updates/basic.js"),
     },
-    views => {}
+    views => {
+	coltitles => {
+                map => readjs("$FindBin::RealBin/design/views/coltitles.map.js"),
+                reduce => "_count",
+        }
+    }
 };
 
 ## Everything else should just work without being fiddled with.
