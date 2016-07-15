@@ -3,7 +3,7 @@ function(doc) {
         'collection' in doc && Array.isArray(doc.collection)) {
         doc.collection.forEach(function(thiscol) {
             emit([thiscol,
-                  'updated' in doc ? doc[updated] : null],null);
+                  'updated' in doc ? doc['updated'] : null],null);
         });
     }
 }
