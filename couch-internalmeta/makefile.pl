@@ -47,7 +47,12 @@ my $design= {
         haspubmin => {
             map => readjs("$FindBin::RealBin/design/views/haspubmin.map.js"),
             reduce => "_count",
-        }
+        },
+        coltitles => {
+            map => readjs("$FindBin::RealBin/design/views/coltitles.map.js"),
+            reduce => "_count",
+        },
+
     }
 };
 
