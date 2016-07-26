@@ -48,6 +48,10 @@ function(doc) {
     if ('collectionDate' in doc) {
         uqd(doc.collectionDate);
     }
+    // Repositories updated
+    if ('reposDate' in doc) {
+        uqd(doc.reposDate);
+    }
     // Approved updated
     if ('approved' in doc) {
         uqd(doc.approved);
