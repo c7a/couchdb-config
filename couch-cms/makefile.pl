@@ -26,6 +26,9 @@ my $design= {
         aliases => {
                 map => readjs("$FindBin::RealBin/design/views/aliases.map.js"),
         },
+	updates => {
+		map => readjs("$FindBin::RealBin/design/views/updates.map.js"),
+        },
     }
 };
 
