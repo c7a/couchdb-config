@@ -105,12 +105,30 @@ function(doc) {
         });
     }
     ///  Above was cut-and-paste
-    
-    for(var lang in doc) {
-        if (Array.isArray(doc[lang].aliases)) {
-            doc[lang].aliases.forEach(function(alias) {
-                emit(removeDiacritics(alias).toLowerCase(),null);
-            });
+    var languages=['en','fr'];
+
+    var rv={};
+    languages.forEach(function(lang) {
+        if (lang in doc) {
+            rv[lang]=doc[lang].path;
         }
+    });
+
+    if (Array.isArray(doc['portal'])) {
+        doc['portal'].forEach(function(portal) {
+            languages.forEach(function(lang) {
+                if (lang in doc && 'path' in doc[lang]) {
+                    emit([portal,
+                          removeDiacritics(doc[lang].path).toLowerCase()],
+                         rv);
+                }
+            });
+            if (Array.isArray(doc['aliases'])) {
+                doc['aliases'].forEach(function(alias) {
+                    emit([portal,removeDiacritics(alias).toLowerCase()],
+                         rv);
+                });
+            }
+        });
     }
 }
