@@ -105,7 +105,7 @@ function(doc) {
         });
     }
     ///  Above was cut-and-paste
-    var languages=['en','fr'];
+    var languages=['en','fr','nolanguage'];
 
     var rv={};
     languages.forEach(function(lang) {

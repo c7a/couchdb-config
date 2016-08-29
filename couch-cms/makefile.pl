@@ -29,6 +29,10 @@ my $design= {
 	updates => {
 		map => readjs("$FindBin::RealBin/design/views/updates.map.js"),
         },
+        nolanguage => {
+                map => readjs("$FindBin::RealBin/design/views/nolanguage.map.js"),
+        },
+
     }
 };
 
