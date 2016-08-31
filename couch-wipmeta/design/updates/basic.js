@@ -35,6 +35,14 @@ function(doc, req){
             doc['ingestHistory'].unshift(ingest);
             updated=true;
         }
+        if ('ingestreq' in updatedoc) {
+            var ingestReq = JSON.parse(updatedoc['ingestreq']);
+            if (!('date' in ingestReq)) {
+                ingestReq['date'] = nowdates;
+            }
+            doc['ingestReq']=ingestReq;
+            updated=true;
+        }
         if ('update' in updatedoc) {
             doc['updatereq'] = nowdates;
             updated=true;
