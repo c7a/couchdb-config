@@ -19,7 +19,7 @@ function(doc, req){
                 }
             } else {
                 // change nothing in database
-                return [null, '{"error": "Missing ID"}\n']
+                return [null, '{"return": "Missing ID"}\n']
             }
         }
         if ('ingest' in updatedoc) {
@@ -33,6 +33,7 @@ function(doc, req){
                 doc['ingestHistory']=[];
             }
             doc['ingestHistory'].unshift(ingest);
+            delete doc['ingestReq'];
             updated=true;
         }
         if ('ingestreq' in updatedoc) {
@@ -55,7 +56,7 @@ function(doc, req){
                     updated=true;
                 }
             } else {
-                return [null, '{"error": "no ingestReq"}\n']
+                return [null, '{"return": "no ingestReq"}\n']
             }
         }
     }
