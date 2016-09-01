@@ -43,9 +43,20 @@ function(doc, req){
             doc['ingestReq']=ingestReq;
             updated=true;
         }
-        if ('update' in updatedoc) {
-            doc['updatereq'] = nowdates;
-            updated=true;
+        if ('processhost' in updatedoc) {
+            var ph = updatedoc['processhost'];
+            if ('ingestReq' in doc) {
+                if ('processhost' in doc.ingestReq && 
+                    doc.ingestReq.processhost === ph) {
+                    return [null, '{"return": "already set"}\n'];
+                } else {
+                    doc.ingestReq['processhost'] = ph;
+                    doc.ingestReq['processdate'] = nowdates;
+                    updated=true;
+                }
+            } else {
+                return [null, '{"error": "no ingestReq"}\n']
+            }
         }
     }
     if (updated) {
