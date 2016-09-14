@@ -114,7 +114,7 @@ function(doc) {
         }
     });
 
-    if (Array.isArray(doc['portal'])) {
+    if (!('block' in doc) && Array.isArray(doc['portal'])) {
         doc['portal'].forEach(function(portal) {
             languages.forEach(function(lang) {
                 if (lang in doc && 'path' in doc[lang]) {

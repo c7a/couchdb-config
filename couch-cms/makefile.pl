@@ -24,15 +24,17 @@ my $design= {
     updates => {},
     views => {
         aliases => {
-                map => readjs("$FindBin::RealBin/design/views/aliases.map.js"),
+            map => readjs("$FindBin::RealBin/design/views/aliases.map.js"),
         },
-	updates => {
-		map => readjs("$FindBin::RealBin/design/views/updates.map.js"),
+        updates => {
+            map => readjs("$FindBin::RealBin/design/views/updates.map.js"),
         },
         byportal => {
-                map => readjs("$FindBin::RealBin/design/views/byportal.map.js"),
+            map => readjs("$FindBin::RealBin/design/views/byportal.map.js"),
         },
-
+        blocks => {
+            map => readjs("$FindBin::RealBin/design/views/blocks.map.js"),
+        }
     }
 };
 
