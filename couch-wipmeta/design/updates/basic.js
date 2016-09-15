@@ -47,9 +47,12 @@ function(doc, req){
         if ('processhost' in updatedoc) {
             var ph = updatedoc['processhost'];
             if ('ingestReq' in doc) {
-                if ('processhost' in doc.ingestReq && 
-                    doc.ingestReq.processhost === ph) {
-                    return [null, '{"return": "already set"}\n'];
+                if ('processhost' in doc.ingestReq) {
+                    if (doc.ingestReq.processhost === ph) {
+                        return [null, '{"return": "already set"}\n'];
+                    } else {
+                        return [null, '{"return": "other host"}\n'];
+                    }
                 } else {
                     doc.ingestReq['processhost'] = ph;
                     doc.ingestReq['processdate'] = nowdates;
