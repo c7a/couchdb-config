@@ -40,6 +40,7 @@ function(doc, req){
                 doc['type'] = 'aip';
                 // Remove old key -- remove this once database transitioned
                 delete doc['public_repo'];
+                doc['reposManifestDate']=updatedoc['manifestdate'];
                 doc['reposDate']=nowdates;
                 updated=true;
             }

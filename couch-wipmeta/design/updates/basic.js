@@ -62,6 +62,24 @@ function(doc, req){
                 return [null, '{"return": "no ingestReq"}\n']
             }
         }
+        if ('repos' in updatedoc) {
+            // This parameter sent as JSON encoded string
+            var repos = JSON.parse(updatedoc['repos']);
+
+            // Equality is same membership, even if different order
+            function hasSameMembers(repo1,repo2) {
+                if (!repo1 || !repo2 || repo1.length != repo2.length) {
+                    return false;
+                }
+                // TODO: cheating for now - treat same if length same
+                return true;
+            }
+            if (!hasSameMembers(doc['repos'],repos)) {
+                doc['repos'] = repos;
+                doc['reposManifestDate']=updatedoc['manifestdate'];
+                updated=true;
+            }
+        }
     }
     if (updated) {
         doc['updated'] = nowdates;
