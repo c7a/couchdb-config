@@ -32,6 +32,9 @@ function(doc, req){
                 doc.filesystem.stage !== filesystem.stage) {
                 oldvalues.stage = doc.filesystem.stage;
                 doc.filesystem.stage = filesystem.stage;
+                if (doc.filesystem.stage === '') {
+                    delete doc.filesystem.stage;
+                }
                 updated=true;
             }
             if ('configid' in filesystem &&
