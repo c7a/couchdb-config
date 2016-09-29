@@ -32,8 +32,14 @@ my $design= {
         byportal => {
             map => readjs("$FindBin::RealBin/design/views/byportal.map.js"),
         },
+        redirects => {
+            map => readjs("$FindBin::RealBin/design/views/redirects.map.js"),
+        },
         blocks => {
             map => readjs("$FindBin::RealBin/design/views/blocks.map.js"),
+        },
+        sitemap => {
+            map => readjs("$FindBin::RealBin/design/views/sitemap.map.js"),
         }
     }
 };
