@@ -28,6 +28,18 @@ my $design= {
             map => readjs("$FindBin::RealBin/design/views/configs.map.js"),
             reduce => "_count",
         },
+        exportq => {
+            map => readjs("$FindBin::RealBin/design/views/exportq.map.js"),
+            reduce => "_count",
+        },
+        exports => {
+            map => readjs("$FindBin::RealBin/design/views/exports.map.js"),
+            reduce => "_count",
+        },
+        exporting => {
+            map => readjs("$FindBin::RealBin/design/views/exporting.map.js"),
+            reduce => "_count",
+        },
         ingestq => {
             map => readjs("$FindBin::RealBin/design/views/ingestq.map.js"),
             reduce => "_count",

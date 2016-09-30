@@ -22,6 +22,8 @@ function(doc, req){
                 return [null, '{"return": "Missing ID"}\n']
             }
         }
+
+        // Ingest related fields
         if ('ingest' in updatedoc) {
             var ingest = JSON.parse(updatedoc['ingest']);
             if (!('date' in ingest)) {
@@ -62,6 +64,39 @@ function(doc, req){
                 return [null, '{"return": "no ingestReq"}\n']
             }
         }
+
+        // Export related fields
+        if ('export' in updatedoc) {
+            var export = JSON.parse(updatedoc['export']);
+            if (!('date' in export)) {
+                export['date'] = nowdates;
+            }
+            if(!'exportHistory' in doc || 
+               !Array.isArray(doc['exportHistory'])) {
+                doc['exportHistory']=[];
+            }
+            doc['exportHistory'].unshift(export);
+            delete doc['exportReq'];
+            updated=true;
+        }
+        if ('exportreq' in updatedoc) {
+            var exportReq = JSON.parse(updatedoc['exportreq']);
+            if (!('date' in exportReq)) {
+                exportReq['date'] = nowdates;
+            }
+            doc['exportReq']=exportReq;
+            updated=true;
+        }
+        if ('exporting' in updatedoc) {
+            if ('exportReq' in doc) {
+                doc.exportReq['exportdate'] = nowdates;
+                updated=true;
+             } else {
+                return [null, '{"return": "no exportReq"}\n']
+            }
+        }
+
+        // Repository related fields
         if ('repos' in updatedoc) {
             // This parameter sent as JSON encoded string
             var repos = JSON.parse(updatedoc['repos']);
