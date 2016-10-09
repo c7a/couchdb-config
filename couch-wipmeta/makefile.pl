@@ -59,6 +59,10 @@ my $design= {
         manifestdate => {
             map => readjs("$FindBin::RealBin/design/views/manifestdate.map.js"),
             reduce => "_count",
+        },
+        repocount => {
+            map => readjs("$FindBin::RealBin/design/views/repocount.map.js"),
+            reduce => "_count",
         }
     }
 };
