@@ -95,6 +95,10 @@ function(doc, req){
                 return [null, '{"return": "no exportReq"}\n']
             }
         }
+        if ('label' in updatedoc) {
+            doc.label=updatedoc.label;
+            updated=true;
+        }
 
         // Repository related fields
         if ('repos' in updatedoc) {
