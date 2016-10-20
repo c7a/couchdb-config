@@ -24,6 +24,14 @@ my $design= {
 	filesystem => readjs("$FindBin::RealBin/design/updates/filesystem.js"),
     },
     views => {
+        buildsipq => {
+            map => readjs("$FindBin::RealBin/design/views/buildsipq.map.js"),
+            reduce => "_count",
+        },
+        buildsips => {
+            map => readjs("$FindBin::RealBin/design/views/buildsips.map.js"),
+            reduce => "_count",
+        },
         configs => {
             map => readjs("$FindBin::RealBin/design/views/configs.map.js"),
             reduce => "_count",
@@ -46,6 +54,10 @@ my $design= {
         },
         ingests => {
             map => readjs("$FindBin::RealBin/design/views/ingests.map.js"),
+            reduce => "_count",
+        },
+        olddoc => {
+            map => readjs("$FindBin::RealBin/design/views/olddoc.map.js"),
             reduce => "_count",
         },
         processing => {

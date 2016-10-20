@@ -106,7 +106,7 @@ function(doc, req){
                !Array.isArray(doc.processReq)) {
                 doc.processReq=[];
             }
-            doc.processReq.unshift(processReq);
+            doc.processReq.push(processReq);
             updated=true;
         }
         if ('processing' in updatedoc) {
@@ -159,12 +159,15 @@ function(doc, req){
                 processed.request !== doc.processReq[0].request) {
                 return [null, '{"return": "No matching request type"}\n']
             }
-            processed.req=doc.processReq.shift();
+            if (processed.status) {
+                processed.req=[doc.processReq.shift()];
+            } else {
+                processed.req=doc.processReq;
+                delete doc.processReq;
+            }
             doc.processHistory.unshift(processed);
             updated=true;
         }
-
-
 
         // Manipulating Label (METS fragment)
         if ('label' in updatedoc) {
