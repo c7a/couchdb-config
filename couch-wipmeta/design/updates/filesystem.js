@@ -29,7 +29,8 @@ function(doc, req){
                 doc.filesystem = {};
             }
             if ('stage' in filesystem &&
-                doc.filesystem.stage !== filesystem.stage) {
+                (doc.filesystem.stage !== filesystem.stage ||
+                 doc.filesystem.stage === '')) {
                 oldvalues.stage = doc.filesystem.stage;
                 doc.filesystem.stage = filesystem.stage;
                 if (doc.filesystem.stage === '') {
