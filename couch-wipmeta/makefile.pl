@@ -48,6 +48,14 @@ my $design= {
             map => readjs("$FindBin::RealBin/design/views/exporting.map.js"),
             reduce => "_count",
         },
+        hasmets => {
+            map => readjs("$FindBin::RealBin/design/views/hasmets.map.js"),
+            reduce => "_count",
+        },
+        hasmetsfs => {
+            map => readjs("$FindBin::RealBin/design/views/hasmetsfs.map.js"),
+            reduce => "_count",
+        },
         ingestq => {
             map => readjs("$FindBin::RealBin/design/views/ingestq.map.js"),
             reduce => "_count",

@@ -1,5 +1,12 @@
 function(doc) {
-    if ('exportHistory' in doc) {
-        emit ([doc.exportHistory[0].status,doc.exportHistory[0].message !== "",doc.exportHistory[0].date],null);
-    }
+    if (!('processHistory' in doc) || !Array.isArray(doc.processHistory) || doc.processHistory.length === 0) {
+        return;
+    };
+    doc.processHistory.every(function(req) {
+        if ('request' in req && req.request === 'export') {
+            emit ([req.status,req.message !== "",req.date],null);
+            return false;
+        }
+        return true;
+    });
 }

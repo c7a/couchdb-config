@@ -1,6 +1,11 @@
 function(doc) {
-    if (!('ingestReq' in doc) || 'processhost' in doc.ingestReq ) {
+    if (!('processReq' in doc) || !Array.isArray(doc.processReq) || doc.processReq.length === 0) {
         return;
+    };
+    var req = doc.processReq[0];
+    if ('request' in req && req.request === 'ingest') {
+        if (!('processhost' in req)) {
+            emit(req.date,null);
+        }
     }
-    emit(doc.ingestReq.date,null);
 }
