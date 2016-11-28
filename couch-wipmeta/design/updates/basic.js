@@ -49,6 +49,13 @@ function(doc, req){
                 ph.reqdate !== doc.processReq[0].date) {
                 return [null, '{"return": "No matching request date"}\n']
             }
+            if ('request' in ph) {
+                var pr=doc.processReq[0].request;
+                if (ph.request === 'mallet' && 
+                    (pr === 'buildsip' || pr === 'manipmd')) {
+                    ph.request=pr;
+                }
+            }
             if (!('request' in ph) || 
                 ph.request !== doc.processReq[0].request) {
                 return [null, '{"return": "No matching request type"}\n']
@@ -81,6 +88,13 @@ function(doc, req){
             if (!('reqdate' in processed) || 
                 processed.reqdate !== doc.processReq[0].date) {
                 return [null, '{"return": "No matching request date"}\n']
+            }
+            if ('request' in processed) {
+                var pr=doc.processReq[0].request;
+                if (processed.request === 'mallet' && 
+                    (pr === 'buildsip' || pr === 'manipmd')) {
+                    processed.request=pr;
+                }
             }
             if (!('request' in processed) || 
                 processed.request !== doc.processReq[0].request) {

@@ -3,7 +3,8 @@ function(doc) {
         return;
     };
     var req = doc.processReq[0];
-    if ('request' in req && req.request === 'buildsip') {
+    if ('request' in req && 
+        (req.request === 'buildsip' || req.request === 'manipmd')) {
         if (!('processhost' in req)) {
             emit(req.date,null);
         }
