@@ -91,6 +91,10 @@ my $design= {
         repocount => {
             map => readjs("$FindBin::RealBin/design/views/repocount.map.js"),
             reduce => "_count",
+        },
+        wipmvq => {
+            map => readjs("$FindBin::RealBin/design/views/wipmvq.map.js"),
+            reduce => "_count",
         }
     }
 };

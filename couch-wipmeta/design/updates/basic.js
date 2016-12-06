@@ -105,8 +105,20 @@ function(doc, req){
             } else {
                 processed.req=doc.processReq;
                 delete doc.processReq;
+
+                // If failure wasn't move, then do a move
+                if (processed.request !== 'move') {
+                    doc.processReq=[{
+                        request: 'move',
+                        date: nowdates,
+                        stage: 'Rejected'
+                    }];
+                }
             }
-            doc.processHistory.unshift(processed);
+            // Don't add moves to History
+            if (processed.request !== 'move') {
+                doc.processHistory.unshift(processed);
+            }
             updated=true;
         }
 
