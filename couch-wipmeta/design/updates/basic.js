@@ -106,8 +106,10 @@ function(doc, req){
                 processed.req=doc.processReq;
                 delete doc.processReq;
 
-                // If failure wasn't move, then do a move
-                if (processed.request !== 'move') {
+                // If failure wasn't move,
+                // and there are files on filesystem, then do a move
+                if (processed.request !== 'move' &&
+                   'filesystem' in doc && 'identifier' in doc.filesystem) {
                     doc.processReq=[{
                         request: 'move',
                         date: nowdates,
