@@ -42,7 +42,8 @@ function(doc, req){
                 ph.date = nowdates;
             }
             if(!'processReq' in doc || 
-               !Array.isArray(doc.processReq)) {
+               !Array.isArray(doc.processReq) || 
+               doc.processReq.length === 0) {
                 return [null, '{"return": "no processReq"}\n']
             }
             if (!('reqdate' in ph) || 
@@ -82,7 +83,8 @@ function(doc, req){
                 doc.processHistory=[];
             }
             if(!'processReq' in doc || 
-               !Array.isArray(doc.processReq)) {
+               !Array.isArray(doc.processReq) || 
+               doc.processReq.length === 0) {
                 return [null, '{"return": "no processReq"}\n']
             }
             if (!('reqdate' in processed) || 
