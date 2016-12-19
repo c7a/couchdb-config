@@ -121,11 +121,26 @@ function(doc, req){
             }
             // Don't add moves to History
             if (processed.request !== 'move') {
+                if(doc.processHistory.length > 0 &&
+                   doc.processHistory[0].request === 'silence') {
+                    doc.processHistory.shift();
+                }
                 doc.processHistory.unshift(processed);
             }
             updated=true;
         }
-
+        if ('silence' in updatedoc) {
+            if(Array.isArray(doc.processHistory) &&
+              "status" in doc.processHistory[0] &&
+              !doc.processHistory[0].status) {
+                doc.processHistory.unshift({
+                    request: 'silence',
+                    date: nowdates,
+                    status: true
+                });
+                updated=true;
+            }
+        }
         // Manipulating Label (METS fragment)
         if ('label' in updatedoc) {
             doc.label=updatedoc.label;
