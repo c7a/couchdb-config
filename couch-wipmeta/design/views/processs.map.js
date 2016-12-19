@@ -3,5 +3,6 @@ function(doc) {
         return;
     };
     req=doc.processHistory[0];
-    emit ([req.status,req.message !== "",req.date],req.request);
+    datep=req.date.split("T");
+    emit ([req.status,req.message !== "",datep[0],datep[1]],req.request);
 }
