@@ -119,8 +119,8 @@ function(doc, req){
                     }];
                 }
             }
-            // Don't add moves to History
-            if (processed.request !== 'move') {
+            // Don't add successful moves to History
+            if (processed.request !== 'move' || !processed.status) {
                 if(doc.processHistory.length > 0 &&
                    doc.processHistory[0].request === 'silence') {
                     doc.processHistory.shift();
