@@ -23,30 +23,28 @@ function(doc, req){
         }
         if ('classify' in updatedoc) {
             var classify=JSON.parse(updatedoc['classify']);
-            if (Object.keys(classify).length >0) {
-                if ('classify' in doc) {
-                    function hasSameClassify(nclassify,oclassify) {
-                        var nkeys=Object.keys(nclassify);
-                        var okeys=Object.keys(oclassify);
-                        if (nkeys.length != okeys.length) {
-                            return false;
-                        }
-                        if (! (nkeys.every(function(thiskey) {
-                            return (thiskey in oclassify && 
-                                    nclassify[thiskey] === oclassify[thiskey]);
-                        }))) {
-                            return false;
-                        }
-                        return true;
+            if ('classify' in doc) {
+                function hasSameClassify(nclassify,oclassify) {
+                    var nkeys=Object.keys(nclassify);
+                    var okeys=Object.keys(oclassify);
+                    if (nkeys.length != okeys.length) {
+                        return false;
                     }
-                    if (! hasSameClassify(classify,doc.classify)) {
-                        doc['classify']=classify;
-                        updated=true;
+                    if (! (nkeys.every(function(thiskey) {
+                        return (thiskey in oclassify && 
+                                nclassify[thiskey] === oclassify[thiskey]);
+                    }))) {
+                        return false;
                     }
-                } else {
+                    return true;
+                }
+                if (! hasSameClassify(classify,doc.classify)) {
                     doc['classify']=classify;
                     updated=true;
                 }
+            } else {
+                doc['classify']=classify;
+                updated=true;
             }
         }
         if ('filesystem' in updatedoc) {
