@@ -26,6 +26,10 @@ my $design= {
 	coltitles => {
                 map => readjs("$FindBin::RealBin/design/views/coltitles.map.js"),
                 reduce => "_count",
+        },
+	borndigital => {
+		map => readjs("$FindBin::RealBin/design/views/borndigital.map.js"),
+                reduce => "_count",
         }
     }
 };
