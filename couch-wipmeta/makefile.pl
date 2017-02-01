@@ -60,6 +60,14 @@ my $design= {
             map => readjs("$FindBin::RealBin/design/views/ingests.map.js"),
             reduce => "_count",
         },
+        imageconvq => {
+            map => readjs("$FindBin::RealBin/design/views/imageconvq.map.js"),
+            reduce => "_count",
+        },
+        imageconvs => {
+            map => readjs("$FindBin::RealBin/design/views/imageconvs.map.js"),
+            reduce => "_count",
+        },
         malletq => {
             map => readjs("$FindBin::RealBin/design/views/malletq.map.js"),
             reduce => "_count",
