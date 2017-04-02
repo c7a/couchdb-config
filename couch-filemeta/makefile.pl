@@ -26,6 +26,10 @@ my $design= {
         stats => {
             map => readjs("$FindBin::RealBin/design/views/stats.map.js"),
             reduce => "_count",
+        },
+        filenames => {
+            map => readjs("$FindBin::RealBin/design/views/filenames.map.js"),
+            reduce => "_count",
         }
     }
 };
