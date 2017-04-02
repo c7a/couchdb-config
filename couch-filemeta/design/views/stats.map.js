@@ -5,7 +5,15 @@ function(doc) {
         var ext=idsp.pop();
         if (dep === "oocihm" && idsp[0].indexOf('lac_reel') === 0) {
             dep="oocihm.lac_reel";
-        }
-        emit([doc.status,doc.format,ext,dep],null);
+        };
+        var errormsg=doc.errormsg;
+        if (typeof errormsg === 'string') {
+            if (errormsg.indexOf('Invalid DateTime length:') === 0) {
+                errormsg='Invalid DateTime length';
+            } else if (errormsg.indexOf('Invalid DateTime digit:') === 0) {
+                errormsg='Invalid DateTime digit';
+            };
+        };
+        emit([doc.status,doc.format,ext,dep,errormsg],null);
     }
 }
