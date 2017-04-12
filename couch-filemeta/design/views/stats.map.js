@@ -10,6 +10,10 @@ function(doc) {
         if (typeof errormsg === 'string') {
             if (errormsg.indexOf('Invalid DateTime length:') === 0) {
                 errormsg='Invalid DateTime length';
+            } else if (errormsg.indexOf('IFD offset not word-aligned:') === 0) {
+                errormsg='IFD offset not word-aligned';
+            } else if (errormsg.indexOf('Value offset not word-aligned:') === 0) {
+                errormsg='Value offset not word-aligned';
             } else if (errormsg.indexOf('Invalid DateTime digit:') === 0) {
                 errormsg='Invalid DateTime digit';
             };
