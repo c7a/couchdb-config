@@ -161,17 +161,32 @@ function(doc, req){
                 // TODO: cheating for now - treat same if length same
                 return true;
             }
-            if (!hasSameMembers(doc['repos'],repos)) {
+            if (! ("reposManifestDate" in doc)
+                || !hasSameMembers(doc['repos'],repos)) {
                 doc['repos'] = repos;
                 doc['reposManifestDate']=updatedoc['manifestdate'];
                 updated=true;
             }
         }
+        if ('METS' in updatedoc) {
+            // This parameter sent as JSON encoded string
+            doc['METS'] = JSON.parse(updatedoc['METS']);
+            doc['METSManifestDate']=updatedoc['manifestdate'];
+            doc['METSDate']=nowdates;
+            updated=true;
+        }
+    }
+    var retval = {};
+    if ("reposManifestDate" in doc) {
+        retval['METSmatch']=(("METSManifestDate" in doc) &&
+                             doc.reposManifestDate === doc.METSManifestDate);
     }
     if (updated) {
         doc['updated'] = nowdates;
-        return [doc, '{"return": "update"}\n'];
+        retval['return']="update";
+        return [doc, JSON.stringify(retval)+"\n"];
     } else {
-        return [null, '{"return": "no update"}\n'];
-    }
+        retval['return']="no update";
+        return [null, JSON.stringify(retval)+"\n"];
+    } 
 }
