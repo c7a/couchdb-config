@@ -79,6 +79,12 @@ my $design= {
             map => readjs("$FindBin::RealBin/design/views/oddmets.map.js"),
             reduce => "_count",
         },
+        hasdimensionmatch => {
+            map => readjs("$FindBin::RealBin/design/views/hasdimensionmatch.map.js"),
+        },
+        hasdimensionnomatch => {
+            map => readjs("$FindBin::RealBin/design/views/hasdimensionnomatch.map.js"),
+        },
     }
 };
 
