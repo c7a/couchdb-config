@@ -52,7 +52,33 @@ my $design= {
             map => readjs("$FindBin::RealBin/design/views/coltitles.map.js"),
             reduce => "_count",
         },
-
+        metscount => {
+            map => readjs("$FindBin::RealBin/design/views/metscount.map.js"),
+            reduce => "_count",
+        },
+        nomets => {
+            map => readjs("$FindBin::RealBin/design/views/nomets.map.js"),
+            reduce => "_count",
+        },
+        metsdate => {
+            map => readjs("$FindBin::RealBin/design/views/metsdate.map.js"),
+        },
+        metsdupmd5 => {
+            map => readjs("$FindBin::RealBin/design/views/metsdupmd5.map.js"),
+            reduce => "_count",
+        },
+        hammerq => {
+            map => readjs("$FindBin::RealBin/design/views/hammerq.map.js"),
+            reduce => "_count",
+        },
+        hammers => {
+            map => readjs("$FindBin::RealBin/design/views/hammers.map.js"),
+            reduce => "_count",
+        },
+        oddmets => {
+            map => readjs("$FindBin::RealBin/design/views/oddmets.map.js"),
+            reduce => "_count",
+        },
     }
 };
 
