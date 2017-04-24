@@ -140,6 +140,14 @@ function(doc, req){
             doc['press']=press;
             updated=true;
         }
+        if ('hammer' in updatedoc) {
+            var hammer = JSON.parse(updatedoc['hammer']);
+            if (!('date' in hammer)) {
+                hammer['date'] = nowdates;
+            }
+            doc['hammer']=hammer;
+            updated=true;
+        }
         if ('update' in updatedoc) {
             doc['updatereq'] = nowdates;
             updated=true;
