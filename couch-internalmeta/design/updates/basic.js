@@ -152,6 +152,12 @@ function(doc, req){
             doc['updatereq'] = nowdates;
             updated=true;
         }
+        if ('hammerretry' in updatedoc) {
+            if ("hammer" in doc && "manifestdate" in doc.hammer) {
+                delete doc.hammer['manifestdate'];
+                updated=true;
+            }
+        }
         if (('label' in updatedoc) && (doc['label']!== updatedoc['label'])) {
             doc['label'] = updatedoc['label'];
             updated=true;
