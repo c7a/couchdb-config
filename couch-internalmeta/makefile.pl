@@ -48,6 +48,10 @@ my $design= {
             map => readjs("$FindBin::RealBin/design/views/haspubmin.map.js"),
             reduce => "_count",
         },
+        colpages => {
+            map => readjs("$FindBin::RealBin/design/views/colpages.map.js"),
+            reduce => "_sum",
+        },
         coltitles => {
             map => readjs("$FindBin::RealBin/design/views/coltitles.map.js"),
             reduce => "_count",
