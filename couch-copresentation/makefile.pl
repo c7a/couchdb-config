@@ -34,7 +34,12 @@ my $design= {
 	canonicalDownloadBad => {
 		map => readjs("$FindBin::RealBin/design/views/canonicalDownloadBad.map.js"),
                 reduce => "_count",
-        }
+        },
+        colpages => {
+                map => readjs("$FindBin::RealBin/design/views/colpages.map.js"),
+                reduce => "_sum",
+        },
+
     }
 };
 
