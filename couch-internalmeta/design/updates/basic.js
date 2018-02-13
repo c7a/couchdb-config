@@ -170,6 +170,10 @@ function(doc, req){
             doc['seq'] = updatedoc['seq'];
             updated=true;
         }
+        if ('canonicalDownload' in updatedoc) {
+            doc['canonicalDownload'] = updatedoc['canonicalDownload'];
+            updated=true;
+        }
         if ('hammerfields' in updatedoc) {
             // This parameter sent as JSON encoded string
             var hammerfields = JSON.parse(updatedoc['hammerfields']);
