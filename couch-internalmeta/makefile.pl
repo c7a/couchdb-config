@@ -93,6 +93,9 @@ my $design= {
         hasdimensionnomatch => {
             map => readjs("$FindBin::RealBin/design/views/hasdimensionnomatch.map.js"),
         },
+        missingitempdf => {
+            map => readjs("$FindBin::RealBin/design/views/missingitempdf.map.js"),
+        },
     }
 };
 
