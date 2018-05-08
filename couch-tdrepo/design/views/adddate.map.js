@@ -1,5 +1,4 @@
 function(doc) {
-    // For now looking for item_repository documents for paneer, but once HammerTime will look at item documents
     if (doc.type && doc.type === 'item_repository' &&
         doc['add date']) {
         // Seems that Date.parse doesn't support this RFC 3339 date format, so using regexp
