@@ -27,14 +27,6 @@ my $design= {
                 map => readjs("$FindBin::RealBin/design/views/coltitles.map.js"),
                 reduce => "_count",
         },
-	borndigital => {
-		map => readjs("$FindBin::RealBin/design/views/borndigital.map.js"),
-                reduce => "_count",
-        },
-	canonicalDownloadBad => {
-		map => readjs("$FindBin::RealBin/design/views/canonicalDownloadBad.map.js"),
-                reduce => "_count",
-        },
         colpages => {
                 map => readjs("$FindBin::RealBin/design/views/colpages.map.js"),
                 reduce => "_sum",
