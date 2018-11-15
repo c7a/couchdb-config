@@ -31,7 +31,9 @@ my $design= {
                 map => readjs("$FindBin::RealBin/design/views/colpages.map.js"),
                 reduce => "_sum",
         },
-
+        fileapproved => {
+                map => readjs("$FindBin::RealBin/design/views/fileapproved.map.js"),
+        }
     }
 };
 
