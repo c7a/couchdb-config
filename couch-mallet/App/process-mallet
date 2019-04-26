@@ -1,4 +1,0 @@
-#!/bin/bash
-# Commands for processing metadata source records from Mallet DB
-# if attachment name contains DBtext do getdbtext and dbtext2heritage
-# if attachment name contains MRC do 
